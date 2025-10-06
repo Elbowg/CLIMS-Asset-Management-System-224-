@@ -1,5 +1,6 @@
 package com.clims.backend.service;
 
+import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Maintenance;
 import com.clims.backend.Repository.MaintenanceRepository;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,10 @@ public class MaintenanceService {
     public List<Maintenance> findAll() { return repo.findAll(); }
 
     public Optional<Maintenance> findById(Long id) { return repo.findById(id); }
+
+    public Maintenance getByIdOrThrow(Long id) {
+        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Maintenance", id));
+    }
 
     public Maintenance create(Maintenance m) {
         m.setId(null);

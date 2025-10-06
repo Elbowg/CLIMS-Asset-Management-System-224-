@@ -1,5 +1,6 @@
 package com.clims.backend.service;
 
+import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Asset;
 import com.clims.backend.Repository.AssetRepository;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,10 @@ public class AssetService {
 
     public Optional<Asset> findById(Long id) { return repo.findById(id); }
 
+    public Asset getByIdOrThrow(Long id) {
+        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Asset", id));
+    }
+
     public Asset create(Asset asset) {
         asset.setId(null);
         return repo.save(asset);
@@ -38,6 +43,8 @@ public class AssetService {
             return repo.save(existing);
         });
     }
+
+    public Asset save(Asset asset) { return repo.save(asset); }
 
     public void delete(Long id) { repo.deleteById(id); }
 }

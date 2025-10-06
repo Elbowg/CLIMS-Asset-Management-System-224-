@@ -1,5 +1,6 @@
 package com.clims.backend.service;
 
+import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Vendor;
 import com.clims.backend.Repository.VendorRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,10 @@ public class VendorService {
     public List<Vendor> findAll() { return repo.findAll(); }
 
     public Optional<Vendor> findById(Long id) { return repo.findById(id); }
+
+    public Vendor getByIdOrThrow(Long id) {
+        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Vendor", id));
+    }
 
     public Vendor create(Vendor vendor) {
         vendor.setId(null);

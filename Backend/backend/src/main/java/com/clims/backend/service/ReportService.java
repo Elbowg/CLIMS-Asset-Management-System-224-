@@ -1,5 +1,6 @@
 package com.clims.backend.service;
 
+import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Report;
 import com.clims.backend.Repository.ReportRepository;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,10 @@ public class ReportService {
     public List<Report> findAll() { return repo.findAll(); }
 
     public Optional<Report> findById(Long id) { return repo.findById(id); }
+
+    public Report getByIdOrThrow(Long id) {
+        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Report", id));
+    }
 
     public Report create(Report r) {
         r.setId(null);

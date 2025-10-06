@@ -1,5 +1,6 @@
 package com.clims.backend.service;
 
+import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Location;
 import com.clims.backend.Repository.LocationRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,10 @@ public class LocationService {
     public List<Location> findAll() { return repo.findAll(); }
 
     public Optional<Location> findById(Long id) { return repo.findById(id); }
+
+    public Location getByIdOrThrow(Long id) {
+        return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Location", id));
+    }
 
     public Location create(Location loc) {
         loc.setId(null);
