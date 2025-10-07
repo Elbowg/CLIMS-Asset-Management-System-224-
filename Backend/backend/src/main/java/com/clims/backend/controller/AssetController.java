@@ -1,6 +1,7 @@
 package com.clims.backend.controller;
 
 import com.clims.backend.dto.AssetDTO;
+import com.clims.backend.dto.AssignRequest;
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.mapper.DtoMapper;
 import com.clims.backend.model.Asset;
@@ -55,9 +56,13 @@ public class AssetController {
     public ResponseEntity<AssetDTO> create(@Valid @RequestBody AssetDTO dto) {
         Asset a = new Asset();
         a.setName(dto.getName());
-        a.setType(dto.getType());
+        if (dto.getType() != null) {
+            a.setType(dto.getType());
+        }
         a.setSerialNumber(dto.getSerialNumber());
-        a.setStatus(dto.getStatus());
+        if (dto.getStatus() != null) {
+            a.setStatus(dto.getStatus());
+        }
         a.setPurchaseDate(dto.getPurchaseDate());
 
         if (dto.getAssignedUserId() != null) {
@@ -84,9 +89,17 @@ public class AssetController {
     public ResponseEntity<AssetDTO> update(@PathVariable Long id, @Valid @RequestBody AssetDTO dto) {
         return assetService.findById(id).map(existing -> {
             existing.setName(dto.getName());
-            existing.setType(dto.getType());
+            if (dto.getType() != null) {
+                existing.setType(dto.getType());
+            } else {
+                existing.setType(null);
+            }
             existing.setSerialNumber(dto.getSerialNumber());
-            existing.setStatus(dto.getStatus());
+            if (dto.getStatus() != null) {
+                existing.setStatus(dto.getStatus());
+            } else {
+                existing.setStatus(null);
+            }
             existing.setPurchaseDate(dto.getPurchaseDate());
 
             if (dto.getAssignedUserId() != null) {
@@ -121,7 +134,22 @@ public class AssetController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        assetService.delete(id);
+        assetService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/assign")
+    public ResponseEntity<AssetDTO> assign(@PathVariable Long id, @RequestBody AssignRequest req) {
+        Asset asset = assetService.getByIdOrThrow(id);
+        User user = userService.findById(req.getUserId()).orElseThrow(() -> new ResourceNotFoundException("User", req.getUserId()));
+        Asset updated = assetService.assignToUser(asset, user);
+        return ResponseEntity.ok(DtoMapper.toDto(updated));
+    }
+
+    @PostMapping("/{id}/unassign")
+    public ResponseEntity<AssetDTO> unassign(@PathVariable Long id) {
+        Asset asset = assetService.getByIdOrThrow(id);
+        Asset updated = assetService.unassignFromUser(asset);
+        return ResponseEntity.ok(DtoMapper.toDto(updated));
     }
 }

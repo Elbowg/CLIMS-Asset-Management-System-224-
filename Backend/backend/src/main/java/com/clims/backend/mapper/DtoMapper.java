@@ -12,9 +12,9 @@ public final class DtoMapper {
         AssetDTO d = new AssetDTO();
         d.setId(a.getId());
         d.setName(a.getName());
-        d.setType(a.getType());
+    d.setType(a.getType());
         d.setSerialNumber(a.getSerialNumber());
-        d.setStatus(a.getStatus());
+    d.setStatus(a.getStatus());
         d.setPurchaseDate(a.getPurchaseDate());
         d.setAssignedUserId(a.getAssignedUser() != null ? a.getAssignedUser().getId() : null);
         d.setLocationId(a.getLocation() != null ? a.getLocation().getId() : null);
@@ -29,7 +29,10 @@ public final class DtoMapper {
         d.setUsername(u.getUsername());
         d.setEmail(u.getEmail());
         d.setFullName(u.getFullName());
-        d.setDepartmentId(u.getDepartmentId());
+        if (u.getDepartment() != null) {
+            d.setDepartmentId(u.getDepartment().getId());
+            d.setDepartmentName(u.getDepartment().getName());
+        }
         return d;
     }
 

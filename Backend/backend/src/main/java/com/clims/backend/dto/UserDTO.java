@@ -6,6 +6,7 @@ public class UserDTO {
     private String email;
     private String fullName;
     private Long departmentId;
+    private String departmentName;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -17,4 +18,6 @@ public class UserDTO {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public Long getDepartmentId() { return departmentId; }
     public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
 }

@@ -16,9 +16,9 @@ class DtoMapperTest {
         Asset a = new Asset();
         a.setId(1L);
         a.setName("Laptop A");
-        a.setType("Laptop");
+    a.setType(com.clims.backend.model.AssetType.LAPTOP);
         a.setSerialNumber("SN123");
-        a.setStatus("AVAILABLE");
+    a.setStatus(com.clims.backend.model.AssetStatus.AVAILABLE);
         a.setPurchaseDate(LocalDate.of(2023,1,1));
         User u = new User(); u.setId(2L);
         a.setAssignedUser(u);
@@ -38,7 +38,8 @@ class DtoMapperTest {
         User u = new User(); u.setId(6L);
         m.setAsset(a);
         m.setReportedBy(u);
-        m.setDescription("Broken screen");
+    m.setDescription("Broken screen");
+    m.setStatus(com.clims.backend.model.MaintenanceStatus.REPORTED);
         m.setReportedAt(LocalDateTime.now());
         MaintenanceDTO dto = com.clims.backend.mapper.DtoMapper.toDto(m);
         assertEquals(10L, dto.getId());

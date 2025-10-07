@@ -2,7 +2,8 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Vendor;
-import com.clims.backend.Repository.VendorRepository;
+import com.clims.backend.repository.VendorRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;

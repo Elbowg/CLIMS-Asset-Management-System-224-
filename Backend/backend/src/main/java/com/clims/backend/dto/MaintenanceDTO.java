@@ -1,12 +1,14 @@
 package com.clims.backend.dto;
 
 import java.time.LocalDateTime;
+import com.clims.backend.model.MaintenanceStatus;
 
 public class MaintenanceDTO {
     private Long id;
     private Long assetId;
     private Long reportedById;
     private String description;
+    private MaintenanceStatus status;
     private LocalDateTime reportedAt;
     private String resolution;
     private LocalDateTime resolvedAt;
@@ -19,6 +21,8 @@ public class MaintenanceDTO {
     public void setReportedById(Long reportedById) { this.reportedById = reportedById; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public MaintenanceStatus getStatus() { return status; }
+    public void setStatus(MaintenanceStatus status) { this.status = status; }
     public LocalDateTime getReportedAt() { return reportedAt; }
     public void setReportedAt(LocalDateTime reportedAt) { this.reportedAt = reportedAt; }
     public String getResolution() { return resolution; }

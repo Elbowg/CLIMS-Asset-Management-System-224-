@@ -2,7 +2,8 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Location;
-import com.clims.backend.Repository.LocationRepository;
+import com.clims.backend.repository.LocationRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;

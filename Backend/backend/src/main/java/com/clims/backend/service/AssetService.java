@@ -2,7 +2,13 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Asset;
-import com.clims.backend.Repository.AssetRepository;
+import com.clims.backend.model.AssignmentHistory;
+import com.clims.backend.model.AssetStatus;
+import com.clims.backend.model.User;
+import com.clims.backend.repository.AssetRepository;
+import com.clims.backend.repository.AssignmentHistoryRepository;
+
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +18,11 @@ import java.util.Optional;
 public class AssetService {
 
     private final AssetRepository repo;
+    private final AssignmentHistoryRepository historyRepo;
 
-    public AssetService(AssetRepository repo) {
+    public AssetService(AssetRepository repo, AssignmentHistoryRepository historyRepo) {
         this.repo = repo;
+        this.historyRepo = historyRepo;
     }
 
     public List<Asset> findAll() { return repo.findAll(); }
@@ -46,5 +54,31 @@ public class AssetService {
 
     public Asset save(Asset asset) { return repo.save(asset); }
 
-    public void delete(Long id) { repo.deleteById(id); }
+    public Asset assignToUser(Asset asset, User user) {
+        if (asset.getStatus() == AssetStatus.MAINTENANCE || asset.getStatus() == AssetStatus.RETIRED) {
+            throw new IllegalStateException("Asset not available for assignment: " + asset.getId());
+        }
+        asset.setAssignedUser(user);
+        asset.setStatus(AssetStatus.ASSIGNED);
+        Asset saved = repo.save(asset);
+
+        AssignmentHistory h = new AssignmentHistory();
+        h.setAsset(saved);
+        h.setUser(user);
+        h.setAssignedAt(LocalDateTime.now());
+        historyRepo.save(h);
+        return saved;
+    }
+
+    public Asset unassignFromUser(Asset asset) {
+        asset.setAssignedUser(null);
+        asset.setStatus(AssetStatus.AVAILABLE);
+        historyRepo.findTopByAsset_IdOrderByAssignedAtDesc(asset.getId()).ifPresent(last -> {
+            last.setUnassignedAt(LocalDateTime.now());
+            historyRepo.save(last);
+        });
+        return repo.save(asset);
+    }
+
+    public void deleteById(Long id) { repo.deleteById(id); }
 }

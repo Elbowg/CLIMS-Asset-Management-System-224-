@@ -1,4 +1,4 @@
-package com.clims.backend.Repository;
+package com.clims.backend.repository;
 
 import com.clims.backend.model.Maintenance;
 import org.springframework.data.jpa.repository.JpaRepository;

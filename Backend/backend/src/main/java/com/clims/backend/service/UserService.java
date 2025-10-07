@@ -2,7 +2,9 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.User;
-import com.clims.backend.Repository.UserRepository;
+import com.clims.backend.repository.UserRepository;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +14,12 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository repo;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository repo) { this.repo = repo; }
+    public UserService(UserRepository repo, PasswordEncoder passwordEncoder) {
+        this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public List<User> findAll() { return repo.findAll(); }
 
@@ -25,6 +31,9 @@ public class UserService {
 
     public User create(User user) {
         user.setId(null);
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return repo.save(user);
     }
 
@@ -33,7 +42,7 @@ public class UserService {
             existing.setUsername(updated.getUsername());
             existing.setEmail(updated.getEmail());
             existing.setFullName(updated.getFullName());
-            existing.setDepartmentId(updated.getDepartmentId());
+            existing.setDepartment(updated.getDepartment());
             return repo.save(existing);
         });
     }

@@ -66,3 +66,23 @@ The system streamlines **asset registration**, **tracking**, **assignment**, **m
 ### **1. Clone the Repository**
 ```bash
 git clone https://github.com/Elbowg/CLIMS-Asset-Management-System.git
+```
+
+### **2. Backend Setup**
+- Navigate to the backend directory: `cd Backend/backend`
+- Build the project: `.\mvnw.cmd clean package`
+- Run tests: `.\mvnw.cmd test`
+- Run specific test (Windows PowerShell): `.\mvnw.cmd "-Dtest=ClassName" test`
+  - Example: `.\mvnw.cmd "-Dtest=com.clims.backend.controller.AssetControllerMvcTest" test`
+- Run the application: `.\mvnw.cmd spring-boot:run`
+
+### **3. Database Setup**
+- Ensure MySQL is installed and running.
+- Update `application.properties` with your MySQL credentials.
+- Flyway migrations will run automatically on startup.
+
+### **4. Frontend Setup**
+- Navigate to the frontend directory: `cd Frontend`
+- Open `index.html` in a browser or serve via a local server.
+
+---

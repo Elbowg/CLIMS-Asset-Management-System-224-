@@ -2,7 +2,8 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Maintenance;
-import com.clims.backend.Repository.MaintenanceRepository;
+import com.clims.backend.repository.MaintenanceRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
