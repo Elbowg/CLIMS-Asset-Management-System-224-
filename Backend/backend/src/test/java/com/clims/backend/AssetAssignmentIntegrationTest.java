@@ -62,7 +62,7 @@ class AssetAssignmentIntegrationTest {
         user.setFullName("Test User");
         Role userRole = roleRepository.findByName("ROLE_USER").orElseThrow();
         user.setRoles(Set.of(userRole));
-        user.setPassword("password");
+    user.setPassword("password1"); // includes digit to satisfy password policy
         User savedUser = userService.create(user);
 
         // Create an asset
@@ -94,7 +94,7 @@ class AssetAssignmentIntegrationTest {
         user.setFullName("Test User 2");
         Role userRole = roleRepository.findByName("ROLE_USER").orElseThrow();
         user.setRoles(Set.of(userRole));
-        user.setPassword("password");
+    user.setPassword("password1"); // includes digit to satisfy password policy
         User savedUser = userService.create(user);
 
         Asset asset = new Asset();

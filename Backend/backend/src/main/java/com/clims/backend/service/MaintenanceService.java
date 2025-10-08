@@ -2,6 +2,8 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Maintenance;
+import com.clims.backend.lifecycle.MaintenanceLifecycle;
+import com.clims.backend.model.MaintenanceStatus;
 import com.clims.backend.repository.MaintenanceRepository;
 
 import org.springframework.stereotype.Service;
@@ -33,6 +35,10 @@ public class MaintenanceService {
 
     public Optional<Maintenance> update(Long id, Maintenance updated) {
         return repo.findById(id).map(existing -> {
+            if (updated.getStatus() != null && existing.getStatus() != updated.getStatus()) {
+                MaintenanceLifecycle.validateTransition(existing.getStatus(), updated.getStatus());
+                existing.setStatus(updated.getStatus());
+            }
             existing.setAsset(updated.getAsset());
             existing.setReportedBy(updated.getReportedBy());
             existing.setDescription(updated.getDescription());
@@ -44,4 +50,24 @@ public class MaintenanceService {
     }
 
     public void delete(Long id) { repo.deleteById(id); }
+
+    public Maintenance startProgress(Maintenance m) {
+        MaintenanceLifecycle.validateTransition(m.getStatus(), MaintenanceStatus.IN_PROGRESS);
+        m.setStatus(MaintenanceStatus.IN_PROGRESS);
+        return repo.save(m);
+    }
+
+    public Maintenance resolve(Maintenance m, String resolution) {
+        MaintenanceLifecycle.validateTransition(m.getStatus(), MaintenanceStatus.RESOLVED);
+        m.setStatus(MaintenanceStatus.RESOLVED);
+        m.setResolution(resolution);
+        m.setResolvedAt(LocalDateTime.now());
+        return repo.save(m);
+    }
+
+    public Maintenance cancel(Maintenance m) {
+        MaintenanceLifecycle.validateTransition(m.getStatus(), MaintenanceStatus.CANCELLED);
+        m.setStatus(MaintenanceStatus.CANCELLED);
+        return repo.save(m);
+    }
 }

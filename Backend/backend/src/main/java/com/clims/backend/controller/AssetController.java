@@ -1,6 +1,7 @@
 package com.clims.backend.controller;
 
 import com.clims.backend.dto.AssetDTO;
+import com.clims.backend.dto.AssignmentHistoryDTO;
 import com.clims.backend.dto.AssignRequest;
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.mapper.DtoMapper;
@@ -14,6 +15,7 @@ import com.clims.backend.service.UserService;
 import com.clims.backend.service.VendorService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,19 +42,21 @@ public class AssetController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public List<AssetDTO> all() {
         return assetService.findAll().stream().map(DtoMapper::toDto).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<AssetDTO> get(@PathVariable Long id) {
-        return assetService.findById(id)
-                .map(DtoMapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    Asset asset = assetService.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Asset", id));
+    return ResponseEntity.ok(DtoMapper.toDto(asset));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssetDTO> create(@Valid @RequestBody AssetDTO dto) {
         Asset a = new Asset();
         a.setName(dto.getName());
@@ -86,8 +90,11 @@ public class AssetController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssetDTO> update(@PathVariable Long id, @Valid @RequestBody AssetDTO dto) {
-        return assetService.findById(id).map(existing -> {
+        Asset existing = assetService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Asset", id));
+        {
             existing.setName(dto.getName());
             if (dto.getType() != null) {
                 existing.setType(dto.getType());
@@ -126,19 +133,20 @@ public class AssetController {
                 existing.setVendor(null);
             }
 
-            Asset saved = assetService.create(existing); // create() clears id; but service.create sets id null — use update via repo save
-            // to preserve semantics call assetService.update instead if you added it; adapt as needed.
+            Asset saved = assetService.create(existing); // TODO: Replace with assetService.update if/when implemented
             return ResponseEntity.ok(DtoMapper.toDto(saved));
-        }).orElse(ResponseEntity.notFound().build());
+        }
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         assetService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/assign")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssetDTO> assign(@PathVariable Long id, @RequestBody AssignRequest req) {
         Asset asset = assetService.getByIdOrThrow(id);
         User user = userService.findById(req.getUserId()).orElseThrow(() -> new ResourceNotFoundException("User", req.getUserId()));
@@ -147,9 +155,20 @@ public class AssetController {
     }
 
     @PostMapping("/{id}/unassign")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssetDTO> unassign(@PathVariable Long id) {
         Asset asset = assetService.getByIdOrThrow(id);
         Asset updated = assetService.unassignFromUser(asset);
         return ResponseEntity.ok(DtoMapper.toDto(updated));
+    }
+
+    @GetMapping("/{id}/history")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<List<AssignmentHistoryDTO>> history(@PathVariable Long id) {
+        // Will throw if asset not found
+        List<AssignmentHistoryDTO> list = assetService.getHistoryForAsset(id).stream()
+                .map(DtoMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
     }
 }

@@ -2,6 +2,7 @@ package com.clims.backend.service;
 
 import com.clims.backend.exception.ResourceNotFoundException;
 import com.clims.backend.model.Asset;
+import com.clims.backend.lifecycle.AssetLifecycle;
 import com.clims.backend.model.AssignmentHistory;
 import com.clims.backend.model.AssetStatus;
 import com.clims.backend.model.User;
@@ -55,9 +56,9 @@ public class AssetService {
     public Asset save(Asset asset) { return repo.save(asset); }
 
     public Asset assignToUser(Asset asset, User user) {
-        if (asset.getStatus() == AssetStatus.MAINTENANCE || asset.getStatus() == AssetStatus.RETIRED) {
-            throw new IllegalStateException("Asset not available for assignment: " + asset.getId());
-        }
+        // Validate transition BEFORE mutating
+        AssetStatus from = asset.getStatus();
+        AssetLifecycle.validateTransition(from, AssetStatus.ASSIGNED);
         asset.setAssignedUser(user);
         asset.setStatus(AssetStatus.ASSIGNED);
         Asset saved = repo.save(asset);
@@ -71,8 +72,10 @@ public class AssetService {
     }
 
     public Asset unassignFromUser(Asset asset) {
-        asset.setAssignedUser(null);
-        asset.setStatus(AssetStatus.AVAILABLE);
+    AssetStatus from = asset.getStatus();
+    AssetLifecycle.validateTransition(from, AssetStatus.AVAILABLE);
+    asset.setAssignedUser(null);
+    asset.setStatus(AssetStatus.AVAILABLE);
         historyRepo.findTopByAsset_IdOrderByAssignedAtDesc(asset.getId()).ifPresent(last -> {
             last.setUnassignedAt(LocalDateTime.now());
             historyRepo.save(last);
@@ -80,5 +83,23 @@ public class AssetService {
         return repo.save(asset);
     }
 
+    public List<AssignmentHistory> getHistoryForAsset(Long assetId) {
+        getByIdOrThrow(assetId); // ensure asset exists
+        return historyRepo.findByAsset_IdOrderByAssignedAtDesc(assetId);
+    }
+
     public void deleteById(Long id) { repo.deleteById(id); }
+
+    public Asset moveToMaintenance(Asset asset) {
+        AssetLifecycle.validateTransition(asset.getStatus(), AssetStatus.MAINTENANCE);
+        asset.setStatus(AssetStatus.MAINTENANCE);
+        return repo.save(asset);
+    }
+
+    public Asset retire(Asset asset) {
+        AssetLifecycle.validateTransition(asset.getStatus(), AssetStatus.RETIRED);
+        asset.setStatus(AssetStatus.RETIRED);
+        asset.setAssignedUser(null);
+        return repo.save(asset);
+    }
 }

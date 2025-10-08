@@ -16,7 +16,9 @@ public class Report {
     @JoinColumn(name = "generated_by")
     private User generatedBy;
 
-    @Lob
+    // Use TEXT (portable) rather than vendor-specific LONGTEXT/CLOB.
+    // Removed @Lob to avoid forcing CLOB expectation; align with migration V8 (TEXT column).
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private LocalDateTime createdAt;

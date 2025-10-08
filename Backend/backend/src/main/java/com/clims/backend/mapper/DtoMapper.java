@@ -76,4 +76,15 @@ public final class DtoMapper {
         d.setCreatedAt(r.getCreatedAt());
         return d;
     }
+
+    public static AssignmentHistoryDTO toDto(AssignmentHistory h) {
+        if (h == null) return null;
+        AssignmentHistoryDTO d = new AssignmentHistoryDTO();
+        d.setId(h.getId());
+        d.setAssetId(h.getAsset() != null ? h.getAsset().getId() : null);
+        d.setUserId(h.getUser() != null ? h.getUser().getId() : null);
+        d.setAssignedAt(h.getAssignedAt());
+        d.setUnassignedAt(h.getUnassignedAt());
+        return d;
+    }
 }

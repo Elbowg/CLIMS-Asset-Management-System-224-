@@ -10,6 +10,7 @@ import com.clims.backend.service.MaintenanceService;
 import com.clims.backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -31,14 +32,17 @@ public class MaintenanceController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public List<MaintenanceDTO> all() { return service.findAll().stream().map(DtoMapper::toDto).collect(Collectors.toList()); }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<MaintenanceDTO> get(@PathVariable Long id) {
         return service.findById(id).map(DtoMapper::toDto).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MaintenanceDTO> create(@Valid @RequestBody MaintenanceDTO dto) {
         Maintenance m = new Maintenance();
         m.setDescription(dto.getDescription());
@@ -61,6 +65,7 @@ public class MaintenanceController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MaintenanceDTO> update(@PathVariable Long id, @Valid @RequestBody MaintenanceDTO dto) {
         return service.findById(id).map(existing -> {
             existing.setDescription(dto.getDescription());
@@ -77,6 +82,7 @@ public class MaintenanceController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+
+import com.clims.backend.exception.PasswordPolicyException;
 
 @Service
 public class UserService {
@@ -32,7 +35,16 @@ public class UserService {
     public User create(User user) {
         user.setId(null);
         if (user.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            var raw = user.getPassword();
+            if (!isPasswordHash(raw)) { // treat as raw password
+                validatePassword(raw);
+                user.setPassword(passwordEncoder.encode(raw));
+            } else {
+                // Defensive: do not allow passing a pre-hashed password directly
+                throw new PasswordPolicyException("Raw password required; pre-hashed values are not accepted");
+            }
+        } else {
+            throw new PasswordPolicyException("Password is required");
         }
         return repo.save(user);
     }
@@ -43,9 +55,36 @@ public class UserService {
             existing.setEmail(updated.getEmail());
             existing.setFullName(updated.getFullName());
             existing.setDepartment(updated.getDepartment());
+            if (updated.getPassword() != null && !updated.getPassword().isBlank()) {
+                var raw = updated.getPassword();
+                if (!isPasswordHash(raw)) {
+                    validatePassword(raw);
+                    existing.setPassword(passwordEncoder.encode(raw));
+                } else {
+                    throw new PasswordPolicyException("Raw password required; pre-hashed values are not accepted");
+                }
+            }
             return repo.save(existing);
         });
     }
 
     public void delete(Long id) { repo.deleteById(id); }
+
+    // --- Password policy helpers ---
+    private static final Pattern LETTER = Pattern.compile(".*[A-Za-z].*");
+    private static final Pattern DIGIT = Pattern.compile(".*[0-9].*");
+
+    private void validatePassword(String raw) {
+        if (raw.length() < 8) {
+            throw new PasswordPolicyException("Password must be at least 8 characters long");
+        }
+        if (!LETTER.matcher(raw).matches() || !DIGIT.matcher(raw).matches()) {
+            throw new PasswordPolicyException("Password must contain at least one letter and one digit");
+        }
+    }
+
+    private boolean isPasswordHash(String value) {
+        // Basic heuristic: BCrypt hashes start with $2a$, $2b$, or $2y$
+        return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
+    }
 }
