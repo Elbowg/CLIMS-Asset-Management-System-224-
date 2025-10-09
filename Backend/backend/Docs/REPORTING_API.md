@@ -46,6 +46,86 @@ Notes
 
 ---
 
+# Reporting API: Asset Daily Status (Summary)
+
+Endpoint
+- Method: GET
+- Path: /api/reports/assets/daily-status
+- Auth: JWT required
+- Authorization: roles ADMIN or REPORT_VIEWER
+- Description: Returns per-day counts of assets by status from the `asset_status_daily` summary table.
+
+Query parameters
+- from (ISO date, required): Start date inclusive, e.g., 2025-10-01
+- to (ISO date, required): End date inclusive, e.g., 2025-10-09
+
+Constraints and validation
+- from and to must be provided.
+- to must be on or after from.
+- Maximum window size is 366 days (inclusive). Requests exceeding this return 400 Bad Request.
+
+Response
+- 200 OK: JSON array of objects sorted by day ascending.
+  - id.bucketDate (string, ISO date)
+  - id.assetStatus (string)
+  - assetCount (number)
+- 400/401/403 as above.
+
+Example
+Request:
+  GET /api/reports/assets/daily-status?from=2025-10-01&to=2025-10-09
+
+Successful response body (truncated):
+[
+  { "id": { "bucketDate": "2025-10-01", "assetStatus": "ASSIGNED" }, "assetCount": 2 },
+  { "id": { "bucketDate": "2025-10-02", "assetStatus": "AVAILABLE" }, "assetCount": 1 }
+]
+
+Notes
+- Data is served from the summary table; run the corresponding Admin ETL to backfill/refresh if needed.
+
+---
+
+# Reporting API: Audit Daily Actions (Summary)
+
+Endpoint
+- Method: GET
+- Path: /api/reports/audit/daily-actions
+- Auth: JWT required
+- Authorization: roles ADMIN or REPORT_VIEWER
+- Description: Returns per-day counts of audit actions from the `audit_action_daily` summary table.
+
+Query parameters
+- from (ISO date, required): Start date inclusive (UTC semantics)
+- to (ISO date, required): End date inclusive (UTC semantics)
+
+Constraints and validation
+- from and to must be provided.
+- to must be on or after from.
+- Maximum window size is 366 days (inclusive). Requests exceeding this return 400 Bad Request.
+
+Response
+- 200 OK: JSON array of objects sorted by day ascending.
+  - id.bucketDate (string, ISO date)
+  - id.auditAction (string)
+  - actionCount (number)
+- 400/401/403 as above.
+
+Example
+Request:
+  GET /api/reports/audit/daily-actions?from=2025-10-01&to=2025-10-09
+
+Successful response body (truncated):
+[
+  { "id": { "bucketDate": "2025-10-01", "auditAction": "LOGIN" }, "actionCount": 1 },
+  { "id": { "bucketDate": "2025-10-02", "auditAction": "REFRESH" }, "actionCount": 2 }
+]
+
+Notes
+- Data is served from the summary table; run the corresponding Admin ETL to backfill/refresh if needed.
+
+---
+
 # Admin: ETL Trigger for Maintenance Activity Daily
 
 Endpoint
