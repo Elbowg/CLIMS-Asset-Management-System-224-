@@ -1,6 +1,8 @@
 
 # 🔧 Backend — CLIMS (Spring Boot + Java)
 
+[![CI](https://github.com/Elbowg/CLIMS-Asset-Management-System-224-/actions/workflows/ci.yml/badge.svg)](https://github.com/Elbowg/CLIMS-Asset-Management-System-224-/actions/workflows/ci.yml)
+
 This folder contains the **backend logic** for the Computer & Laptop Asset Management System (CLIMS).
 
 ## ✅ Operational Features
@@ -152,6 +154,25 @@ docker run -p 8080:8080 \
 Health check:
 ```bash
 curl -f http://localhost:8080/actuator/health
+```
+
+### 📦 GHCR (GitHub Container Registry)
+Images are published automatically from the `main` branch and tags to:
+
+- `ghcr.io/elbowg/clims-backend:latest`
+- `ghcr.io/elbowg/clims-backend:<git-sha>`
+- `ghcr.io/elbowg/clims-backend:<tag>` (when pushing tags like v1.2.3)
+
+Pull and run from GHCR:
+```bash
+docker pull ghcr.io/elbowg/clims-backend:latest
+docker run -p 8080:8080 \
+   -e SPRING_PROFILES_ACTIVE=prod \
+   -e JWT_SECRET=superSecretValue \
+   -e DB_URL=jdbc:mysql://mysql:3306/clims_db \
+   -e DB_USERNAME=clims_user \
+   -e DB_PASSWORD=changeMe \
+   ghcr.io/elbowg/clims-backend:latest
 ```
 
 ## 🧩 Profiles

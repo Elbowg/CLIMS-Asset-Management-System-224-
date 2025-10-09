@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Backend/**'
+
+jobs:
+  build-and-test:
+    name: Build and Test (Backend)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend/backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Maven Verify (module)
+        run: |
+          ./mvnw -q -B -ntp -DskipTests=false clean verify
+
+      - name: Archive Surefire Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: |
+            Backend/backend/target/surefire-reports/**
+
+      - name: Archive JaCoCo Coverage (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: |
+            Backend/backend/target/site/jacoco/**
+            Backend/backend/target/jacoco.exec
