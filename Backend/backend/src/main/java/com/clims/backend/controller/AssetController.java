@@ -14,6 +14,10 @@ import com.clims.backend.service.LocationService;
 import com.clims.backend.service.UserService;
 import com.clims.backend.service.VendorService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -41,10 +45,46 @@ public class AssetController {
         this.vendorService = vendorService;
     }
 
+    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int MAX_PAGE_SIZE = 100;
+
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public List<AssetDTO> all() {
-        return assetService.findAll().stream().map(DtoMapper::toDto).collect(Collectors.toList());
+    public Page<?> all(@RequestParam(name = "page", required = false, defaultValue = "0") int page,
+                       @RequestParam(name = "size", required = false) Integer size,
+                       @RequestParam(name = "status", required = false) String status,
+                       @RequestParam(name = "assignedUserId", required = false) Long assignedUserId,
+                       @RequestParam(name = "sort", required = false) String sort) {
+        int effectiveSize = (size == null) ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, effectiveSize, resolveSort(sort));
+        // Parse status enum safely
+        com.clims.backend.model.AssetStatus statusEnum = null;
+        if (status != null && !status.isBlank()) {
+            try { statusEnum = com.clims.backend.model.AssetStatus.valueOf(status.toUpperCase()); }
+            catch (IllegalArgumentException ex) { throw new IllegalArgumentException("Invalid status value: " + status); }
+        }
+        return assetService.findFilteredPage(statusEnum, assignedUserId, pageable);
+    }
+
+    private Sort resolveSort(String sortParam) {
+        if (sortParam == null || sortParam.isBlank()) {
+            return Sort.by(Sort.Direction.ASC, "id");
+        }
+        // Support comma form field,dir e.g. name,desc
+        String[] parts = sortParam.split(",");
+        String field = parts[0].trim();
+        String dir = parts.length > 1 ? parts[1].trim().toLowerCase() : "asc";
+        // Whitelist allowed fields; on invalid field, hard fallback to id ASC
+        if (!field.matches("id|name|status|assignedUserId")) {
+            return Sort.by(Sort.Direction.ASC, "id");
+        }
+        // Default to ASC when direction is invalid or unspecified
+        Sort.Direction direction = dir.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        // assignedUserId is nested; map to assignedUser.id for JPA
+        if (field.equals("assignedUserId")) {
+            return Sort.by(direction, "assignedUser.id");
+        }
+        return Sort.by(direction, field);
     }
 
     @GetMapping("/{id}")

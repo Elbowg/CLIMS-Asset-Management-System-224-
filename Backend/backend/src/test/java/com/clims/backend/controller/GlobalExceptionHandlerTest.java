@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import com.clims.backend.web.RequestIdFilter;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -41,18 +42,21 @@ class GlobalExceptionHandlerTest {
 
     @BeforeEach
     void setup() {
-        mvc = MockMvcBuilders.standaloneSetup(new DummyController())
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
+    mvc = MockMvcBuilders.standaloneSetup(new DummyController())
+        .addFilters(new RequestIdFilter())
+        .setControllerAdvice(new GlobalExceptionHandler())
+        .build();
     }
 
     @Test
     void notFoundMapped() throws Exception {
-        mvc.perform(get("/test/nf"))
+    mvc.perform(get("/test/nf").header("X-Correlation-Id", "corr-123"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.path").value("/test/nf"));
+        .andExpect(jsonPath("$.path").value("/test/nf"))
+        .andExpect(jsonPath("$.requestId").exists())
+        .andExpect(jsonPath("$.correlationId").value("corr-123"));
     }
 
     @Test
@@ -60,13 +64,17 @@ class GlobalExceptionHandlerTest {
         mvc.perform(post("/test/val").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.details.fields.name").exists());
+                .andExpect(jsonPath("$.details.fields.name").exists())
+                .andExpect(jsonPath("$.requestId").exists())
+                .andExpect(jsonPath("$.correlationId").exists());
     }
 
     @Test
     void businessRuleMapped() throws Exception {
         mvc.perform(get("/test/br"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATION"));
+                .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATION"))
+                .andExpect(jsonPath("$.requestId").exists())
+                .andExpect(jsonPath("$.correlationId").exists());
     }
 }

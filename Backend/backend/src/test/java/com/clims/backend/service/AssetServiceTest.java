@@ -15,18 +15,21 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.clims.backend.service.OutboxEventService;
 
 class AssetServiceTest {
 
     AssetRepository assetRepo;
     AssignmentHistoryRepository historyRepo;
     AssetService service;
+    OutboxEventService outboxEventService;
 
     @BeforeEach
     void setup() {
         assetRepo = mock(AssetRepository.class);
         historyRepo = mock(AssignmentHistoryRepository.class);
-        service = new AssetService(assetRepo, historyRepo);
+    outboxEventService = mock(OutboxEventService.class);
+    service = new AssetService(assetRepo, historyRepo, outboxEventService);
     }
 
     @Test
@@ -48,5 +51,6 @@ class AssetServiceTest {
         assertEquals(AssetStatus.AVAILABLE, unassigned.getStatus());
         assertNull(unassigned.getAssignedUser());
     verify(historyRepo, times(2)).save(any(AssignmentHistory.class));
+    verifyNoInteractions(outboxEventService); // create() path not exercised here
     }
 }

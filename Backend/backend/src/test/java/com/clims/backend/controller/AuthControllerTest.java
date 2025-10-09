@@ -3,6 +3,9 @@ package com.clims.backend.controller;
 import com.clims.backend.dto.AuthRequest;
 import com.clims.backend.dto.RefreshRequest;
 import com.clims.backend.security.JwtUtil;
+import com.clims.backend.security.JwtKeyProvider;
+import com.clims.backend.config.JwtProperties;
+import com.clims.backend.security.TokenBlacklist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,20 +27,24 @@ class AuthControllerTest {
     MockMvc mvc;
     AuthenticationManager authenticationManager;
     JwtUtil jwtUtil;
+    TokenBlacklist tokenBlacklist;
     ObjectMapper mapper = new ObjectMapper();
 
     @BeforeEach
     void setup() throws Exception {
         authenticationManager = mock(AuthenticationManager.class);
-        jwtUtil = new JwtUtil();
-        // inject secret and expirations via reflection (simplistic for test)
-        var secretField = JwtUtil.class.getDeclaredField("jwtSecret"); secretField.setAccessible(true); secretField.set(jwtUtil, "01234567890123456789012345678901");
-        var accessExp = JwtUtil.class.getDeclaredField("accessExpiration"); accessExp.setAccessible(true); accessExp.set(jwtUtil, 60000L);
-        var refreshExp = JwtUtil.class.getDeclaredField("refreshExpiration"); refreshExp.setAccessible(true); refreshExp.set(jwtUtil, 120000L);
+        tokenBlacklist = mock(TokenBlacklist.class);
+        JwtProperties props = new JwtProperties();
+        props.setSecret("01234567890123456789012345678901");
+        props.setAccessExpiration(60000L);
+        props.setRefreshExpiration(120000L);
+        JwtKeyProvider keyProvider = new JwtKeyProvider();
+        keyProvider.setSecret(props.getSecret());
+        jwtUtil = new JwtUtil(props, keyProvider);
 
-        AuthController controller = new AuthController();
-        var amField = AuthController.class.getDeclaredField("authenticationManager"); amField.setAccessible(true); amField.set(controller, authenticationManager);
-        var juField = AuthController.class.getDeclaredField("jwtUtil"); juField.setAccessible(true); juField.set(controller, jwtUtil);
+        // AuditService not relevant for these tests; pass a simple mock
+        com.clims.backend.service.AuditService auditService = mock(com.clims.backend.service.AuditService.class);
+        AuthController controller = new AuthController(authenticationManager, jwtUtil, tokenBlacklist, null, auditService);
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -64,6 +71,7 @@ class AuthControllerTest {
 
         String rt = jwtUtil.generateRefreshToken("bob");
         RefreshRequest rr = new RefreshRequest(); rr.setRefreshToken(rt);
+    when(tokenBlacklist.isBlacklisted(anyString())).thenReturn(false);
 
         mvc.perform(post("/api/auth/refresh").contentType("application/json").content(mapper.writeValueAsString(rr)))
                 .andExpect(status().isOk())

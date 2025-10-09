@@ -1,42 +1,37 @@
 package com.clims.backend.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import com.clims.backend.config.JwtProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:defaultSecretKeyForDevelopmentPurposesOnlyChangeInProduction}")
-    private String jwtSecret;
+    private final JwtProperties properties;
+    private final JwtKeyProvider keyProvider;
 
-    @Value("${jwt.access-expiration:900000}") // 15 minutes
-    private long accessExpiration;
-
-    @Value("${jwt.refresh-expiration:604800000}") // 7 days
-    private long refreshExpiration;
-
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    public JwtUtil(JwtProperties properties, JwtKeyProvider keyProvider) {
+        this.properties = properties;
+        this.keyProvider = keyProvider;
     }
 
     public String generateAccessToken(Authentication authentication) {
         UserDetails principal = (UserDetails) authentication.getPrincipal();
-        return buildToken(principal.getUsername(), JwtTokenType.ACCESS, accessExpiration, principal);
+    return buildToken(principal.getUsername(), JwtTokenType.ACCESS, properties.getAccessExpiration(), principal);
     }
 
     public String generateAccessTokenFromUsername(String username) {
-        return buildToken(username, JwtTokenType.ACCESS, accessExpiration, null);
+    return buildToken(username, JwtTokenType.ACCESS, properties.getAccessExpiration(), null);
     }
 
     public String generateRefreshToken(String username) {
-        return buildToken(username, JwtTokenType.REFRESH, refreshExpiration, null);
+    return buildToken(username, JwtTokenType.REFRESH, properties.getRefreshExpiration(), null);
     }
 
     private String buildToken(String username, JwtTokenType type, long ttl, UserDetails principal) {
@@ -46,8 +41,9 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
+                .setId(UUID.randomUUID().toString())
                 .claim("typ", type.name())
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256);
+                .signWith(keyProvider.signingKey(), SignatureAlgorithm.HS256);
         if (principal != null && type == JwtTokenType.ACCESS) {
             builder.claim("roles", principal.getAuthorities().stream().map(a -> a.getAuthority()).toList());
         }
@@ -55,11 +51,18 @@ public class JwtUtil {
     }
 
     public Claims parseClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        // Attempt verification against all configured keys (supports rotation window)
+        var keys = keyProvider.verificationKeys();
+        JwtException last = null;
+        for (SecretKey k : keys) {
+            try {
+                return Jwts.parserBuilder().setSigningKey(k).build().parseClaimsJws(token).getBody();
+            } catch (JwtException ex) {
+                last = ex; // try next
+            }
+        }
+        if (last != null) throw last;
+        throw new JwtException("No verification keys configured");
     }
 
     public String getUsername(String token) {
@@ -77,10 +80,7 @@ public class JwtUtil {
 
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(authToken);
+            parseClaims(authToken);
             return true;
         } catch (MalformedJwtException e) {
             System.err.println("Invalid JWT token: " + e.getMessage());
@@ -94,6 +94,8 @@ public class JwtUtil {
         return false;
     }
 
-    public long getAccessExpirationSeconds() { return accessExpiration / 1000; }
-    public long getRefreshExpirationSeconds() { return refreshExpiration / 1000; }
+    public long getAccessExpirationSeconds() { return properties.getAccessExpiration() / 1000; }
+    public long getRefreshExpirationSeconds() { return properties.getRefreshExpiration() / 1000; }
+
+    public String getJti(String token) { return parseClaims(token).getId(); }
 }

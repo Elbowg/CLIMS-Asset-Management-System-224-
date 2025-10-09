@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.MDC;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +20,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private ErrorResponse build(HttpServletRequest request, HttpStatus status, ErrorCode code, String message, Map<String,Object> details) {
-        return ErrorResponse.of(request.getRequestURI(), status.value(), status.getReasonPhrase(), code, message, details);
+        String requestId = MDC.get("requestId");
+        // Correlation ID header (client-supplied) can differ from internal request id; fall back to requestId if absent
+        String correlationId = request.getHeader("X-Correlation-Id");
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = requestId; // unify when not provided
+        }
+        return ErrorResponse.of(request.getRequestURI(), status.value(), status.getReasonPhrase(), code, message, details, requestId, correlationId);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

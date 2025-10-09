@@ -10,17 +10,20 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.clims.backend.service.OutboxEventService;
 
 class AssetLifecycleTest {
     AssetRepository assetRepo;
     AssignmentHistoryRepository histRepo;
     AssetService service;
+    OutboxEventService outboxEventService;
 
     @BeforeEach
     void setup() {
         assetRepo = mock(AssetRepository.class);
         histRepo = mock(AssignmentHistoryRepository.class);
-        service = new AssetService(assetRepo, histRepo);
+    outboxEventService = mock(OutboxEventService.class);
+    service = new AssetService(assetRepo, histRepo, outboxEventService);
         when(assetRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
@@ -29,6 +32,7 @@ class AssetLifecycleTest {
         Asset a = new Asset(); a.setStatus(AssetStatus.AVAILABLE); a.setId(5L);
         service.assignToUser(a, null);
         assertEquals(AssetStatus.ASSIGNED, a.getStatus());
+        verifyNoInteractions(outboxEventService); // assign path doesn't record outbox yet
     }
 
     @Test
