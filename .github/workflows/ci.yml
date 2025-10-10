@@ -48,3 +48,31 @@ jobs:
           path: |
             Backend/backend/target/site/jacoco/**
             Backend/backend/target/jacoco.exec
+
+      - name: Generate and Archive OpenAPI Spec
+        if: success()
+        run: |
+          # Run the app in background using local profile on port 8080
+          nohup ./mvnw -q -Dspring-boot.run.profiles=local spring-boot:run &
+          APP_PID=$!
+          echo "App PID: $APP_PID"
+          # Wait for readiness (up to ~60s)
+          for i in {1..60}; do
+            if curl -fsS http://localhost:8080/actuator/health > /dev/null; then
+              echo "App is up"; break; fi; sleep 1; done
+          # Fetch OpenAPI JSON and YAML
+          mkdir -p target/openapi
+          curl -fsS http://localhost:8080/v3/api-docs -o target/openapi/openapi.json
+          curl -fsS http://localhost:8080/v3/api-docs.yaml -o target/openapi/openapi.yaml
+          # Stop the app
+          kill $APP_PID || true
+        shell: bash
+
+      - name: Upload OpenAPI Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-spec
+          path: |
+            Backend/backend/target/openapi/openapi.json
+            Backend/backend/target/openapi/openapi.yaml
