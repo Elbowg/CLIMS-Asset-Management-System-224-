@@ -24,6 +24,7 @@ import com.clims.backend.web.MdcUserFilter;
 @Configuration
 @EnableMethodSecurity
 @EnableConfigurationProperties({JwtProperties.class})
+@org.springframework.context.annotation.Profile("!insecure")
 public class SecurityConfig {
 
     @Autowired

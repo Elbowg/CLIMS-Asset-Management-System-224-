@@ -21,20 +21,72 @@ This folder contains the **backend logic** for the Computer & Laptop Asset Manag
 ## 🚀 Run (Local Dev)
 Prerequisites: **Java 17**, Docker (optional for MySQL), Maven Wrapper included.
 
-Using local MySQL (default `application.properties`):
+### Quick Start (Recommended for Development)
+
+#### Option 1: Insecure Dev Mode (No Authentication Required)
+**Best for rapid development and frontend testing**
+
 ```bash
+# Navigate to the backend module
+cd Backend/backend
+
+# Start with insecure profile (permits all requests)
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local,insecure
+```
+
+**Features:**
+- ✅ No authentication required for API calls
+- ✅ CORS enabled for frontend development
+- ✅ Bound to localhost (127.0.0.1) only for safety
+- ✅ H2 console and Swagger UI enabled
+- ⚠️ **WARNING**: Only use for local development, never in production
+
+#### Option 2: Secured Mode (JWT Authentication)
+**Production-like setup with full security**
+
+```bash
+# Navigate to the backend module
+cd Backend/backend
+
+# Start with local profile (requires JWT authentication)
 ./mvnw spring-boot:run
 ```
+
+**Features:**
+- ✅ Full JWT authentication required
+- ✅ Role-based access control (RBAC)
+- ✅ Seeded users: `admin/admin` (ROLE_ADMIN) and `user/user` (ROLE_USER)
+- ✅ Production-like security
+
+**To get a JWT token:**
+```bash
+# Login and get token
+curl -X POST http://127.0.0.1:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}'
+
+# Use token in subsequent requests
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://127.0.0.1:8080/api/hello
+```
+
+### Advanced Options
 
 Override JWT secret & expirations:
 ```bash
 JWT_SECRET=changeMeStrong JWT_ACCESS_EXPIRATION=7200000 ./mvnw spring-boot:run
 ```
 
-Run the built jar:
+Run the built jar (secured mode):
 ```bash
 ./mvnw -q package
 java -jar target/backend-0.0.1-SNAPSHOT.jar
+```
+
+Run the built jar (insecure mode):
+```bash
+./mvnw -q package
+java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,insecure
 ```
 
 ## 🌐 Important Endpoints
