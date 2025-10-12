@@ -5,6 +5,44 @@
 
 This folder contains the **backend logic** for the Computer & Laptop Asset Management System (CLIMS).
 
+---
+
+## ⚡ Quick Start (PowerShell)
+
+**Easiest way to run the backend on Windows:**
+
+```powershell
+# Navigate to the Backend folder
+cd Backend
+
+# Run the startup script
+.\start-backend.ps1
+```
+
+The script will:
+- Navigate to the backend module directory
+- Start the Spring Boot application using Maven
+- Display startup progress
+
+**Wait for these lines:**
+```
+Tomcat started on port(s): 8080
+Started BackendApplication
+```
+
+Once you see those, the backend is ready at `http://localhost:8080` 🎉
+
+**Test it's working:**
+```powershell
+# Check health
+Invoke-RestMethod -Uri 'http://localhost:8080/actuator/health'
+
+# Test the hello endpoint (requires authentication in secured mode)
+Invoke-RestMethod -Uri 'http://localhost:8080/api/hello'
+```
+
+---
+
 ## ✅ Operational Features
 | Feature | Status | Details |
 |---------|--------|---------|
@@ -19,56 +57,64 @@ This folder contains the **backend logic** for the Computer & Laptop Asset Manag
 | Graceful Shutdown | ✔ | Enabled in prod profile |
 
 ## 🚀 Run (Local Dev)
-Prerequisites: **Java 17**, Docker (optional for MySQL), Maven Wrapper included.
+Prerequisites: **Java 17**, Maven Wrapper included.
 
-### Quick Start (Recommended for Development)
+### Standard Startup (Recommended)
 
-#### Option 1: Insecure Dev Mode (No Authentication Required)
-**Best for rapid development and frontend testing**
-
-```bash
-# Navigate to the backend module
-cd Backend/backend
-
-# Start with insecure profile (permits all requests)
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local,insecure
+```powershell
+# Windows PowerShell
+cd Backend\backend
+.\mvnw.cmd spring-boot:run
 ```
 
-**Features:**
-- ✅ No authentication required for API calls
-- ✅ CORS enabled for frontend development
-- ✅ Bound to localhost (127.0.0.1) only for safety
-- ✅ H2 console and Swagger UI enabled
-- ⚠️ **WARNING**: Only use for local development, never in production
-
-#### Option 2: Secured Mode (JWT Authentication)
-**Production-like setup with full security**
-
 ```bash
-# Navigate to the backend module
+# Linux/Mac
 cd Backend/backend
-
-# Start with local profile (requires JWT authentication)
 ./mvnw spring-boot:run
 ```
 
-**Features:**
-- ✅ Full JWT authentication required
-- ✅ Role-based access control (RBAC)
-- ✅ Seeded users: `admin/admin` (ROLE_ADMIN) and `user/user` (ROLE_USER)
-- ✅ Production-like security
+**Default configuration:**
+- Uses H2 in-memory database (auto-configured via `local` profile)
+- Runs on port 8080
+- JWT authentication enabled
+- Swagger UI available at http://localhost:8080/swagger-ui/index.html
 
-**To get a JWT token:**
-```bash
-# Login and get token
-curl -X POST http://127.0.0.1:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin"}'
+### Getting Started with Authentication
 
-# Use token in subsequent requests
-curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  http://127.0.0.1:8080/api/hello
+The backend uses JWT authentication. To call protected endpoints:
+
+**PowerShell:**
+```powershell
+# Login (seeded users: admin/admin or user/user)
+$loginBody = @{ username = 'admin'; password = 'admin' } | ConvertTo-Json
+$tokens = Invoke-RestMethod -Method POST -Uri 'http://localhost:8080/api/auth/login' -Body $loginBody -ContentType 'application/json'
+
+# Use the access token
+$headers = @{ Authorization = "Bearer $($tokens.accessToken)" }
+Invoke-RestMethod -Headers $headers -Uri 'http://localhost:8080/api/hello'
 ```
+
+**Or use Swagger UI (easier):**
+1. Open http://localhost:8080/swagger-ui/index.html
+2. Click "Authorize"  
+3. Login at `/api/auth/login` to get a token
+4. Paste `Bearer YOUR_ACCESS_TOKEN` in the authorization dialog
+5. Try endpoints with authentication
+
+### Alternative: Insecure Dev Mode
+
+For rapid frontend development without dealing with JWTs:
+
+```powershell
+cd Backend\backend
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local,insecure
+```
+
+**Features:**
+- No authentication required for API calls
+- CORS enabled for frontend development
+- Bound to localhost (127.0.0.1) only for safety
+- **⚠️ WARNING**: Only for local development, never in production
 
 ### Advanced Options
 
@@ -77,16 +123,10 @@ Override JWT secret & expirations:
 JWT_SECRET=changeMeStrong JWT_ACCESS_EXPIRATION=7200000 ./mvnw spring-boot:run
 ```
 
-Run the built jar (secured mode):
+Run the built JAR:
 ```bash
 ./mvnw -q package
 java -jar target/backend-0.0.1-SNAPSHOT.jar
-```
-
-Run the built jar (insecure mode):
-```bash
-./mvnw -q package
-java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,insecure
 ```
 
 ## 🌐 Important Endpoints
