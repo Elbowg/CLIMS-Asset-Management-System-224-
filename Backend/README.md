@@ -21,9 +21,16 @@ This folder contains the **backend logic** for the Computer & Laptop Asset Manag
 ## 🚀 Run (Local Dev)
 Prerequisites: **Java 17**, Docker (optional for MySQL), Maven Wrapper included.
 
-Using local MySQL (default `application.properties`):
+### Default Mode (Secured with JWT)
+Using local H2 in-memory database:
 ```bash
+cd backend
 ./mvnw spring-boot:run
+```
+
+Using local MySQL (configured in `application.properties`):
+```bash
+./mvnw spring-boot:run -Dspring.profiles.active=prod
 ```
 
 Override JWT secret & expirations:
@@ -36,6 +43,38 @@ Run the built jar:
 ./mvnw -q package
 java -jar target/backend-0.0.1-SNAPSHOT.jar
 ```
+
+### Insecure Dev Mode (No Authentication)
+**⚠️ WARNING: Local development only! Never use in production!**
+
+For quick frontend development without needing to authenticate:
+```bash
+cd backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local,insecure
+```
+
+Or with the built jar:
+```bash
+java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,insecure
+```
+
+**What happens in insecure mode:**
+- All endpoints permit unauthenticated access
+- CORS is enabled for common localhost origins (3000, 5500, 8000, etc.)
+- Server binds to `127.0.0.1` only (loopback)
+- Actuator limited to health/info endpoints
+- JWT auth is completely bypassed
+- H2 console available at `/h2-console`
+
+**When to use insecure mode:**
+- Frontend development and testing
+- Quick API exploration without managing tokens
+- Local-only experimentation
+
+**Never use insecure mode when:**
+- Deploying to any shared environment
+- Running in CI/CD pipelines
+- Accessible from any network interface other than loopback
 
 ## 🌐 Important Endpoints
 | Purpose | Method | Path |

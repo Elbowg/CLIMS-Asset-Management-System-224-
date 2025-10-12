@@ -1,13 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>CLIMS</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLIMS - Computer & Laptop Asset Management System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <div class="container mt-5">
-    <h1>Welcome to CLIMS</h1>
-    <p>This is the frontend for the Computer & Laptop Asset Management System.</p>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">CLIMS</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <span class="navbar-text text-white me-3" id="userInfo"></span>
+          </li>
+          <li class="nav-item">
+            <button class="btn btn-outline-light btn-sm" id="logoutBtn" style="display: none;">Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mt-4">
+    <!-- Login Card -->
+    <div class="row justify-content-center" id="loginCard">
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+          <div class="card-body">
+            <h3 class="card-title text-center mb-4">Login</h3>
+            <form id="loginForm">
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+            <div class="mt-3 text-muted small">
+              <p class="mb-1">Demo credentials:</p>
+              <ul class="list-unstyled">
+                <li>Admin: admin / admin</li>
+                <li>User: user / user</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main App Content (hidden by default) -->
+    <div id="appContent" style="display: none;">
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mb-4" id="appTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button">
+            Home
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button">
+            Assets
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="assignments-tab" data-bs-toggle="tab" data-bs-target="#assignments" type="button">
+            Assignments
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button">
+            Reports
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="appTabsContent">
+        <!-- Home Tab -->
+        <div class="tab-pane fade show active" id="home" role="tabpanel">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title">Welcome to CLIMS</h4>
+              <p class="card-text">Computer & Laptop Asset Management System</p>
+              <div class="mt-4">
+                <h5>Test Backend Connection</h5>
+                <button class="btn btn-success" id="testHelloBtn">Call /api/hello</button>
+                <div class="mt-3">
+                  <div id="helloResponse" class="alert" style="display: none;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assets Tab -->
+        <div class="tab-pane fade" id="assets" role="tabpanel">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title">Assets Management</h4>
+              <p class="text-muted">Asset registration and management features coming soon...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignments Tab -->
+        <div class="tab-pane fade" id="assignments" role="tabpanel">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title">Asset Assignments</h4>
+              <p class="text-muted">Assignment tracking features coming soon...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div class="tab-pane fade" id="reports" role="tabpanel">
+          <div class="card">
+            <div class="card-body">
+              <h4 class="card-title">Reports</h4>
+              <p class="text-muted">Reporting features coming soon...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Toast Container for Notifications -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast" role="alert">
+      <div class="toast-header">
+        <strong class="me-auto" id="toastTitle">Notification</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body" id="toastBody"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/app.js"></script>
 </body>
 </html>
