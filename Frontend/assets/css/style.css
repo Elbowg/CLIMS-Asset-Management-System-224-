@@ -1,0 +1,5 @@
+/* CLIMS minimal custom styles */
+body { background-color: #f8f9fa; }
+.view { min-height: 300px; }
+#alertContainer { z-index: 1080; }
+pre { max-height: 260px; overflow: auto; }

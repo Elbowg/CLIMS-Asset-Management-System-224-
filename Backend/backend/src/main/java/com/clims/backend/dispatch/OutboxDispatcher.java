@@ -90,6 +90,46 @@ public class OutboxDispatcher {
             .record(Duration.between(start, Instant.now()));
     }
 
+    /**
+     * Dispatch a single event immediately using the same logic as batch.
+     * Returns true if successfully SENT, false if marked FAILED or RETRY due to error/missing handler.
+     */
+    @Transactional
+    public boolean dispatchOne(OutboxEvent e) {
+        try {
+            OutboxEventHandler handler = handlerMap.get(e.getEventType());
+            if (handler == null) {
+                log.error("No handler registered for eventType={}, marking FAILED id={}", e.getEventType(), e.getId());
+                e.markFailedPermanent();
+                meterRegistry.counter("outbox.dispatch.missingHandler").increment();
+                return false;
+            }
+            handler.handle(e);
+            e.markSent();
+            meterRegistry.counter("outbox.dispatch.success").increment();
+            return true;
+        } catch (Exception ex) {
+            meterRegistry.counter("outbox.dispatch.failure", "exception", ex.getClass().getSimpleName()).increment();
+            if (e.getAttemptCount() + 1 >= properties.getMaxAttempts()) {
+                e.markFailedPermanent();
+                meterRegistry.counter("outbox.dispatch.dead").increment();
+                log.error("Outbox event id={} permanently failed after attempts", e.getId(), ex);
+            } else {
+                Instant next = computeNextAttempt(e.getAttemptCount());
+                e.markRetry(next);
+                log.warn("Outbox event id={} failed attempt={} scheduling retry at {}", e.getId(), e.getAttemptCount(), next, ex);
+            }
+            return false;
+        }
+    }
+
+    /** Convenience overload to ensure entity is managed within this transaction. */
+    @Transactional
+    public boolean dispatchOneById(Long id) {
+        OutboxEvent e = repo.findById(id).orElseThrow();
+        return dispatchOne(e);
+    }
+
     private Instant computeNextAttempt(int currentAttempts) {
         double factor = Math.pow(properties.getBackoffMultiplier(), currentAttempts);
         long delayMs = Math.round(properties.getInitialBackoffMs() * factor);

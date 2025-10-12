@@ -1,4 +1,4 @@
-package com.clims..nperf;
+package com.clims.perf;
 
 import org.openjdk.jmh.Main;
 
