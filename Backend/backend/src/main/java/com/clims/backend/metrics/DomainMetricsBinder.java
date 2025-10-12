@@ -8,6 +8,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import jakarta.annotation.PostConstruct;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Configuration
 @ConditionalOnBean(MeterRegistry.class)
+@Profile("!insecure") // Don't load in insecure profile
 public class DomainMetricsBinder {
 
     private final AssetRepository assetRepository;
