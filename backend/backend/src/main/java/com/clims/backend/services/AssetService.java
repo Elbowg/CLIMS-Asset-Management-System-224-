@@ -1,13 +1,19 @@
 package com.clims.backend.services;
 
 import com.clims.backend.dto.AssetDtos;
+import com.clims.backend.exceptions.NotFoundException;
 import com.clims.backend.models.entities.*;
 import com.clims.backend.models.enums.AssetStatus;
 import com.clims.backend.repositories.*;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +50,10 @@ public class AssetService {
         asset.setPurchaseDate(req.purchaseDate());
         asset.setWarrantyExpiryDate(req.warrantyExpiryDate());
         if (req.locationId() != null) {
-            asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow());
+            asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow(() -> new NotFoundException("Location not found")));
         }
         if (req.vendorId() != null) {
-            asset.setVendor(vendorRepository.findById(req.vendorId()).orElseThrow());
+            asset.setVendor(vendorRepository.findById(req.vendorId()).orElseThrow(() -> new NotFoundException("Vendor not found")));
         }
         asset.setStatus(AssetStatus.AVAILABLE);
         asset.setAssetTag(generateAssetTag());
@@ -58,7 +64,25 @@ public class AssetService {
 
     public List<Asset> list() { return assetRepository.findAll(); }
 
-    public Asset get(Long id) { return assetRepository.findById(id).orElseThrow(); }
+    public Page<Asset> search(Pageable pageable, AssetStatus status, Long departmentId, Long locationId, Long vendorId, String q) {
+        Specification<Asset> spec = Specification.where(null);
+        if (status != null) spec = spec.and((root, cq, cb) -> cb.equal(root.get("status"), status));
+    if (departmentId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("assignedUser", JoinType.LEFT).join("department", JoinType.LEFT).get("id"), departmentId));
+    if (locationId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("location", JoinType.LEFT).get("id"), locationId));
+    if (vendorId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("vendor", JoinType.LEFT).get("id"), vendorId));
+        if (q != null && !q.isBlank()) {
+            String like = "%" + q.toLowerCase() + "%";
+            spec = spec.and((root, cq, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("assetTag")), like),
+                    cb.like(cb.lower(root.get("serialNumber")), like),
+                    cb.like(cb.lower(root.get("make")), like),
+                    cb.like(cb.lower(root.get("model")), like)
+            ));
+        }
+        return assetRepository.findAll(spec, pageable);
+    }
+
+    public Asset get(Long id) { return assetRepository.findById(id).orElseThrow(() -> new NotFoundException("Asset not found")); }
 
     @Transactional
     public Asset update(Long id, AssetDtos.UpdateAssetRequest req, AppUser actor) {
@@ -67,7 +91,7 @@ public class AssetService {
         if (req.model() != null) asset.setModel(req.model());
         if (req.warrantyExpiryDate() != null) asset.setWarrantyExpiryDate(req.warrantyExpiryDate());
         if (req.status() != null) asset.setStatus(req.status());
-        if (req.locationId() != null) asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow());
+    if (req.locationId() != null) asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow(() -> new NotFoundException("Location not found")));
         auditLogService.log("Asset", asset.getId(), "UPDATE", "Asset updated", actor);
         return assetRepository.save(asset);
     }
@@ -85,11 +109,11 @@ public class AssetService {
         if (asset.getStatus() != AssetStatus.AVAILABLE) {
             throw new IllegalStateException("Only AVAILABLE assets can be assigned");
         }
-        AppUser assignee = userRepository.findById(req.userId()).orElseThrow();
+    AppUser assignee = userRepository.findById(req.userId()).orElseThrow(() -> new NotFoundException("User not found"));
         asset.setAssignedUser(assignee);
         asset.setStatus(AssetStatus.ASSIGNED);
         if (req.locationId() != null) {
-            asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow());
+            asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow(() -> new NotFoundException("Location not found")));
         }
         auditLogService.log("Asset", asset.getId(), "ASSIGN", "Assigned to user " + assignee.getUsername(), actor);
         return assetRepository.save(asset);
@@ -105,15 +129,24 @@ public class AssetService {
         return "AST-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    public String generateQrForAsset(String assetTag) {
+    public byte[] generateQrPng(String assetTag) {
         try {
             var writer = new QRCodeWriter();
             var bitMatrix = writer.encode(assetTag, BarcodeFormat.QR_CODE, 200, 200);
-            // Convert to simple string bytes (for demo). For real use, render PNG bytes.
-            String payload = assetTag + ":" + bitMatrix.getWidth() + "x" + bitMatrix.getHeight();
-            return Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-        } catch (WriterException e) {
+            var baos = new java.io.ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", baos);
+            return baos.toByteArray();
+        } catch (WriterException | java.io.IOException e) {
             throw new RuntimeException("Failed to generate QR", e);
         }
+    }
+
+    @Transactional
+    public Asset dispose(Long id, AppUser actor) {
+        Asset asset = get(id);
+        asset.setStatus(AssetStatus.RETIRED);
+        asset.setAssignedUser(null);
+        auditLogService.log("Asset", id, "DISPOSE", "Asset retired", actor);
+        return assetRepository.save(asset);
     }
 }

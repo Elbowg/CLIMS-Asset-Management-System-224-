@@ -14,4 +14,19 @@ public class UserDtos {
     ){}
 
     public record UserResponse(Long id, String username, String email, String role, String department){}
+
+    public record UserListFilter(
+            Integer page,
+            Integer size,
+            String sort,
+            Role role,
+            Long departmentId,
+            String q
+    ){}
+
+    public record UpdateRoleRequest(@NotBlank Role role){}
+    public record UpdateDepartmentRequest(Long departmentId){}
+
+    public record ResetPasswordRequest(@NotBlank String newPassword){}
+    public record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword){}
 }

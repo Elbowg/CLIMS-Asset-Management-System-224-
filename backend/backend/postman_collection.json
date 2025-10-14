@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "CLIMS Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@123\"\n}" }
+      }
+    },
+    {
+      "name": "Auth - Me",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] }
+      }
+    },
+    {
+      "name": "Assets - List",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/assets", "host": ["{{baseUrl}}"], "path": ["api","assets"] }
+      }
+    },
+    {
+      "name": "Assets - Get by ID",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/assets/1", "host": ["{{baseUrl}}"], "path": ["api","assets","1"] }
+      }
+    },
+    {
+      "name": "Assets - Audit trail",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/assets/1/audit", "host": ["{{baseUrl}}"], "path": ["api","assets","1","audit"] }
+      }
+    },
+    {
+      "name": "Admin - Users list",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/users?page=0&size=10", "host": ["{{baseUrl}}"], "path": ["api","users"], "query": [
+          {"key":"page","value":"0"},{"key":"size","value":"10"}
+        ] }
+      }
+    },
+    {
+      "name": "Admin - Update role",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/users/1/role", "host": ["{{baseUrl}}"], "path": ["api","users","1","role"] },
+        "body": { "mode": "raw", "raw": "{\n  \"role\": \"IT_STAFF\"\n}" }
+      }
+    },
+    {
+      "name": "Admin - Update department",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/users/1/department", "host": ["{{baseUrl}}"], "path": ["api","users","1","department"] },
+        "body": { "mode": "raw", "raw": "{\n  \"departmentId\": 1\n}" }
+      }
+    },
+    {
+      "name": "Reports - Inventory CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/reports/inventory/csv", "host": ["{{baseUrl}}"], "path": ["api","reports","inventory","csv"] },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    },
+    {
+      "name": "Reports - Inventory PDF",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/reports/inventory/pdf", "host": ["{{baseUrl}}"], "path": ["api","reports","inventory","pdf"] },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    },
+    {
+      "name": "Reports - Maintenance CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/reports/maintenance/csv", "host": ["{{baseUrl}}"], "path": ["api","reports","maintenance","csv"] },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    },
+    {
+      "name": "Reports - Maintenance PDF",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/reports/maintenance/pdf", "host": ["{{baseUrl}}"], "path": ["api","reports","maintenance","pdf"] },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" }
+  ]
+}

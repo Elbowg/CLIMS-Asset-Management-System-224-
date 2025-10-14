@@ -1,6 +1,7 @@
 package com.clims.backend.config;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -17,12 +18,13 @@ public class AppConfig {
     }
 
     @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    public WebMvcConfigurer corsConfigurer(@Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:4200}") String allowedOrigins) {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                String[] origins = allowedOrigins.split(",");
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000", "http://localhost:4200", "*")
+                        .allowedOrigins(origins)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(false);

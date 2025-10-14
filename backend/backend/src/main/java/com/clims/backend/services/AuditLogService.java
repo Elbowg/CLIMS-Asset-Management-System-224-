@@ -5,6 +5,8 @@ import com.clims.backend.models.entities.AuditLog;
 import com.clims.backend.repositories.AuditLogRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
@@ -21,5 +23,9 @@ public class AuditLogService {
         log.setDetails(details);
         log.setUser(user);
         auditLogRepository.save(log);
+    }
+
+    public List<AuditLog> findByEntity(String entityName, Long entityId) {
+        return auditLogRepository.findByEntityNameAndEntityIdOrderByCreatedAtDesc(entityName, entityId);
     }
 }
