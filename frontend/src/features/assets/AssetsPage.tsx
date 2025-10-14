@@ -38,6 +38,7 @@ export const AssetsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <button onClick={() => refetch()} className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300">Refresh</button>
           <a href="/api/assets/export/csv" className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">Export CSV</a>
+          <a href="/assets/new" className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700">New Asset</a>
         </div>
       </div>
       {isLoading && <div>Loading...</div>}

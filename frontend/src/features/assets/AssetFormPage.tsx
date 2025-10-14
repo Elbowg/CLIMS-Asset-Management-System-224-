@@ -1,0 +1,168 @@
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../auth/AuthContext';
+import { createApi } from '../../api/client';
+import { useToast } from '../../components/ToastContext';
+
+export const AssetFormPage: React.FC = () => {
+  const { id } = useParams();
+  const isEdit = !!id && id !== 'new';
+  const { token } = useAuth();
+  const api = createApi(() => token);
+  const nav = useNavigate();
+  const toast = useToast();
+  const qc = useQueryClient();
+
+  const { data: lookups } = useQuery({
+    queryKey: ['lookups', token],
+    queryFn: async () => {
+      const [departments, locations, vendors] = await Promise.all([
+        api.lookups.departments(),
+        api.lookups.locations(),
+        api.lookups.vendors()
+      ]);
+      return { departments, locations, vendors } as { departments: any[]; locations: any[]; vendors: any[] };
+    },
+    enabled: !!token
+  });
+
+  const { data: asset, isLoading } = useQuery({
+    queryKey: ['asset', id, token],
+    queryFn: async () => api.assets.getById(Number(id)),
+    enabled: !!id && !!token && isEdit
+  });
+
+  const [form, setForm] = React.useState({
+    serialNumber: '',
+    make: '',
+    model: '',
+    purchaseDate: '',
+    warrantyExpiryDate: '',
+    locationId: undefined as number | undefined,
+    vendorId: undefined as number | undefined
+  });
+
+  React.useEffect(() => {
+    if (asset) {
+      setForm({
+        serialNumber: asset.serialNumber ?? '',
+        make: asset.make ?? '',
+        model: asset.model ?? '',
+        purchaseDate: '',
+        warrantyExpiryDate: '',
+        locationId: undefined,
+        vendorId: undefined
+      });
+    }
+  }, [asset]);
+
+  const updateField = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (isEdit && id) {
+        await api.assets.update(Number(id), {
+          make: form.make || undefined,
+          model: form.model || undefined,
+          warrantyExpiryDate: form.warrantyExpiryDate || undefined,
+          locationId: form.locationId
+        });
+        // update cached asset detail
+        qc.setQueryData(['asset', Number(id), token], (prev: any) => ({ ...(prev ?? {}), make: form.make, model: form.model, warrantyExpiryDate: form.warrantyExpiryDate, locationId: form.locationId }));
+        // update any assets list caches that start with ['assets']
+  qc.setQueriesData({ queryKey: ['assets'] }, (old: any) => {
+          if (!old) return old;
+          // paged response
+          if (Array.isArray(old)) {
+            return old.map((a: any) => a.id === Number(id) ? { ...a, make: form.make, model: form.model } : a);
+          }
+          if (old.content && Array.isArray(old.content)) {
+            return { ...old, content: old.content.map((a: any) => a.id === Number(id) ? { ...a, make: form.make, model: form.model } : a) };
+          }
+          return old;
+        });
+        toast.push('Asset updated', 'success');
+        nav(`/assets/${id}`);
+      } else {
+        const created = await api.assets.create({
+          serialNumber: form.serialNumber,
+          make: form.make,
+          model: form.model,
+          purchaseDate: form.purchaseDate,
+          warrantyExpiryDate: form.warrantyExpiryDate || undefined,
+          locationId: form.locationId,
+          vendorId: form.vendorId
+        });
+        // optimistically insert into any cached assets lists
+  qc.setQueriesData({ queryKey: ['assets'] }, (old: any) => {
+          if (!old) return old;
+          if (Array.isArray(old)) {
+            return [created as any, ...old];
+          }
+          if (old.content && Array.isArray(old.content)) {
+            return { ...old, content: [created as any, ...(old.content || [])], totalElements: ((old.totalElements || 0) + 1) };
+          }
+          return old;
+        });
+        // set asset detail cache directly
+        qc.setQueryData(['asset', created.id, token], created);
+        toast.push('Asset created', 'success');
+        nav(`/assets/${created.id ?? ''}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.push(err?.message ?? 'Failed to save asset', 'error');
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-4">{isEdit ? 'Edit Asset' : 'New Asset'}</h1>
+      {isLoading && <div>Loading...</div>}
+      <form onSubmit={onSubmit} className="max-w-lg">
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Serial Number</label>
+          <input value={form.serialNumber} onChange={e => updateField('serialNumber', e.target.value)} className="w-full border px-2 py-1" />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Make</label>
+          <input value={form.make} onChange={e => updateField('make', e.target.value)} className="w-full border px-2 py-1" />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Model</label>
+          <input value={form.model} onChange={e => updateField('model', e.target.value)} className="w-full border px-2 py-1" />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Purchase Date</label>
+          <input type="date" value={form.purchaseDate} onChange={e => updateField('purchaseDate', e.target.value)} className="w-full border px-2 py-1" />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Warranty Expiry</label>
+          <input type="date" value={form.warrantyExpiryDate} onChange={e => updateField('warrantyExpiryDate', e.target.value)} className="w-full border px-2 py-1" />
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Location</label>
+          <select className="w-full border px-2 py-1" value={form.locationId ?? ''} onChange={e => updateField('locationId', e.target.value ? Number(e.target.value) : undefined)}>
+            <option value="">-- select --</option>
+            {(lookups?.locations ?? []).map((l: any) => <option value={l.id} key={l.id}>{l.name}</option>)}
+          </select>
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Vendor</label>
+          <select className="w-full border px-2 py-1" value={form.vendorId ?? ''} onChange={e => updateField('vendorId', e.target.value ? Number(e.target.value) : undefined)}>
+            <option value="">-- select --</option>
+            {(lookups?.vendors ?? []).map((v: any) => <option value={v.id} key={v.id}>{v.name}</option>)}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">Save</button>
+          <button type="button" onClick={() => nav('/assets')} className="px-3 py-1 border rounded">Cancel</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default AssetFormPage;

@@ -21,6 +21,11 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             <nav className="flex items-center gap-4 text-sm">
               <Link className="hover:underline" to="/">Dashboard</Link>
               <Link className="hover:underline" to="/assets">Assets</Link>
+              <Link className="hover:underline" to="/users">Users</Link>
+              <Link className="hover:underline" to="/departments">Departments</Link>
+              <Link className="hover:underline" to="/maintenance">Maintenance</Link>
+              <Link className="hover:underline" to="/locations">Locations</Link>
+              <Link className="hover:underline" to="/vendors">Vendors</Link>
             </nav>
           </div>
           <div className="relative">
