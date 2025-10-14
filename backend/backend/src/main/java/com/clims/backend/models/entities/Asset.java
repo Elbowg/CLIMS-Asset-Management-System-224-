@@ -26,15 +26,19 @@ public class Asset extends Auditable {
     private String assetTag; // generated id or QR code text
 
     @NotBlank
+    @Column(nullable = false)
     private String serialNumber;
 
     @NotBlank
+    @Column(nullable = false)
     private String make;
 
     @NotBlank
+    @Column(nullable = false)
     private String model;
 
     @NotNull
+    @Column(nullable = false)
     private LocalDate purchaseDate;
 
     private LocalDate warrantyExpiryDate;

@@ -16,6 +16,7 @@ public class Report extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 255)
     private String name;
     @Column(name = "report_type")
     private String type; // e.g., INVENTORY, MAINTENANCE, DEPRECIATION
@@ -25,5 +26,6 @@ public class Report extends Auditable {
     private AppUser generatedBy;
 
     private String filterJson;
+    @Column(length = 50)
     private String exportFormat; // CSV/PDF
 }

@@ -30,9 +30,11 @@ public class Maintenance extends Auditable {
     private AppUser reportedBy;
 
     @NotBlank
+    @Column(nullable = false)
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private MaintenanceStatus status = MaintenanceStatus.SCHEDULED;
 
     @FutureOrPresent

@@ -38,12 +38,16 @@ public class SecurityConfig {
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
         )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+        .authorizeHttpRequests(auth -> auth
+            // Public endpoints (keep narrow definitions first)
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources", "/swagger-resources/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/").permitAll()
+            .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+            // Allow Spring Boot default error path so anonymous users see problem details for public endpoints
+            .requestMatchers("/error").permitAll()
+            .anyRequest().authenticated()
+        )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

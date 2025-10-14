@@ -32,12 +32,14 @@ public class CorsConfig {
 
         List<String> origins = splitAndTrim(allowedOriginsProp);
         if (origins.isEmpty()) {
-            // In dev, property provides defaults; in prod, missing means no origins allowed
-            config.setAllowedOriginPatterns(List.of());
+            // Fallback for local dev if the property/environment isn't set
+            origins = List.of("http://localhost:5173", "http://127.0.0.1:5173");
         } else {
-            // Use patterns to allow http(s) schemes as provided
-            config.setAllowedOriginPatterns(origins);
+            // Use exact origins for clarity with credentials
         }
+
+        // Prefer explicit allowed origins over patterns when using credentials
+        config.setAllowedOrigins(origins);
 
         config.setAllowedMethods(splitAndTrim(allowedMethodsProp));
         config.setAllowedHeaders(splitAndTrim(allowedHeadersProp));

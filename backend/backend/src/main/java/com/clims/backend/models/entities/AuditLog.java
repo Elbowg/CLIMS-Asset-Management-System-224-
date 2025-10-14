@@ -16,8 +16,13 @@ public class AuditLog extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String entityName;
+
+    @Column(nullable = false)
     private Long entityId;
+
+    @Column(nullable = false)
     private String action; // CREATE, UPDATE, DELETE, ASSIGN, DISPOSE
     private String details;
 

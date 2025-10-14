@@ -28,6 +28,7 @@ public class AppUser extends Auditable {
     private String email;
 
     @NotBlank
+    @Column(nullable = false)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
