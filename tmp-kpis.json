@@ -1,0 +1,11 @@
+{
+  "totalAssets": 4,
+  "assetsByStatus": {
+    "AVAILABLE": 4,
+    "RETIRED": 0,
+    "ASSIGNED": 0,
+    "UNDER_REPAIR": 0,
+    "UNKNOWN": 0
+  },
+  "upcomingMaintenance": 1
+}

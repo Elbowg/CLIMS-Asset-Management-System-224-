@@ -14,6 +14,7 @@ import { VendorsPage } from './features/vendors/VendorsPage';
 import { AssetDetailPage } from './features/assets/AssetDetailPage';
 import { AssetFormPage } from './features/assets/AssetFormPage';
 import { NotFoundPage } from './features/misc/NotFoundPage';
+import ProfilePage from './features/auth/ProfilePage';
 import AppLayout from './layouts/AppLayout';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,6 +39,7 @@ export const App: React.FC = () => (
             <Route path="/" element={<PrivateRoute><AppLayout><DashboardPage /></AppLayout></PrivateRoute>} />
             <Route path="/assets" element={<PrivateRoute><AppLayout><AssetsPage /></AppLayout></PrivateRoute>} />
             <Route path="/users" element={<PrivateRoute><AppLayout><UsersPage /></AppLayout></PrivateRoute>} />
+            <Route path="/profile" element={<PrivateRoute><AppLayout><ProfilePage /></AppLayout></PrivateRoute>} />
             <Route path="/departments" element={<PrivateRoute><AppLayout><DepartmentsPage /></AppLayout></PrivateRoute>} />
             <Route path="/maintenance" element={<PrivateRoute><AppLayout><MaintenancePage /></AppLayout></PrivateRoute>} />
             <Route path="/locations" element={<PrivateRoute><AppLayout><LocationsPage /></AppLayout></PrivateRoute>} />

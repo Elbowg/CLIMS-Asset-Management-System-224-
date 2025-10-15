@@ -5,6 +5,8 @@ import com.clims.backend.security.CurrentUserService;
 import com.clims.backend.security.JwtUtil;
 import com.clims.backend.models.entities.AppUser;
 import com.clims.backend.services.UserService;
+import com.clims.backend.services.RefreshTokenService;
+import com.clims.backend.models.entities.RefreshToken;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -26,11 +29,14 @@ public class AuthController {
     private final CurrentUserService currentUserService;
     private final UserService userService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, CurrentUserService currentUserService, UserService userService) {
+    private final RefreshTokenService refreshTokenService;
+
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, CurrentUserService currentUserService, UserService userService, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.currentUserService = currentUserService;
         this.userService = userService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public record LoginRequest(String username, String password) {}
@@ -44,10 +50,36 @@ public class AuthController {
             Map<String, Object> claims = new HashMap<>();
             claims.put("roles", user.getAuthorities());
             String token = jwtUtil.generateToken(user.getUsername(), claims);
-            return ResponseEntity.ok(Map.of("token", token));
+            // create refresh token
+            AppUser appUser = userService.findByUsername(user.getUsername());
+            RefreshToken rt = refreshTokenService.createRefreshToken(appUser);
+            return ResponseEntity.ok(Map.of("token", token, "refreshToken", rt.getToken()));
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         }
+    }
+
+    public record RefreshRequest(String refreshToken) {}
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody RefreshRequest req) {
+        var maybe = refreshTokenService.findByToken(req.refreshToken());
+        if (maybe.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+    RefreshToken rt = maybe.get();
+    Map<String, Object> claims = new HashMap<>();
+    var role = rt.getUser().getRole();
+    if (role != null) claims.put("roles", role);
+    else claims.put("roles", List.of());
+    String token = jwtUtil.generateToken(rt.getUser().getUsername(), claims);
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    public record LogoutRequest(String refreshToken) {}
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody LogoutRequest req) {
+        refreshTokenService.findByToken(req.refreshToken()).ifPresent(t -> refreshTokenService.revoke(t));
+        return ResponseEntity.ok(Map.of("message", "Logged out"));
     }
 
     @PostMapping("/register")
@@ -75,5 +107,20 @@ public class AuthController {
                 user.getRole() != null ? user.getRole().name() : null,
                 user.getDepartment() != null ? user.getDepartment().getName() : null
         ));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody com.clims.backend.dto.UserDtos.ChangePasswordRequest req) {
+        AppUser user = currentUserService.requireCurrentUser();
+        if (user == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        try {
+            userService.changePassword(user.getId(), req.currentPassword(), req.newPassword());
+            // Revoke existing refresh tokens and issue a new one so frontend can replace stored token
+            refreshTokenService.revokeForUser(user);
+            RefreshToken newRt = refreshTokenService.createRefreshToken(user);
+            return ResponseEntity.ok(Map.of("message", "Password changed", "refreshToken", newRt.getToken()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
     }
 }

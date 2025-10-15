@@ -13,4 +13,8 @@ public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecific
     Optional<Asset> findByAssetTag(String assetTag);
     List<Asset> findByStatus(AssetStatus status);
     List<Asset> findByWarrantyExpiryDateBefore(LocalDate date);
+
+    // Return grouped counts by status: tuple (status, count)
+    @org.springframework.data.jpa.repository.Query("SELECT a.status, COUNT(a) FROM Asset a GROUP BY a.status")
+    java.util.List<Object[]> countByStatusGroup();
 }

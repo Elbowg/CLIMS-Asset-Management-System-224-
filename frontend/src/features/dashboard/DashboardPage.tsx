@@ -20,41 +20,53 @@ export const DashboardPage: React.FC = () => {
     enabled: !!token
   });
 
+  const kpisQ = useQuery({
+    queryKey: ['dashboard', 'kpis', token],
+    queryFn: async () => api.reports.kpis(),
+    enabled: !!token
+  });
+
   const assets = assetsQ.data?.content ?? [];
-  const totalAssets = assetsQ.data?.totalElements ?? (Array.isArray(assets) ? assets.length : 0);
-  const byStatus = (assets || []).reduce((acc: Record<string, number>, a: any) => { acc[a.status ?? 'UNKNOWN'] = (acc[a.status ?? 'UNKNOWN'] || 0) + 1; return acc; }, {});
+  // Prefer backend KPIs when available
+  const totalAssets = kpisQ.data?.totalAssets ?? assetsQ.data?.totalElements ?? (Array.isArray(assets) ? assets.length : 0);
+  const byStatus: Record<string, number> = (() => {
+    const raw = kpisQ.data?.assetsByStatus as Record<string, number> | undefined;
+    if (raw) return raw;
+    return (assets || []).reduce<Record<string, number>>((acc, a: any) => { acc[a.status ?? 'UNKNOWN'] = (acc[a.status ?? 'UNKNOWN'] || 0) + 1; return acc; }, {});
+  })();
+  const upcomingMaintenanceCount = kpisQ.data?.upcomingMaintenance ?? (maintenanceQ.data?.totalElements ?? (maintenanceQ.data?.content?.length ?? 0));
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 rounded-lg shadow-sm bg-white flex items-center gap-4">
+        <div className="p-4 rounded-lg shadow bg-white flex items-center gap-4 border">
           <div className="p-3 rounded-full bg-blue-50">
             <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" /></svg>
           </div>
           <div>
             <div className="text-sm text-gray-500">Total assets</div>
-            <div className="text-2xl font-bold">{assetsQ.isLoading ? <span className="inline-block w-20 h-6 bg-gray-200 rounded animate-pulse" /> : totalAssets}</div>
+            <div className="text-2xl font-bold">{kpisQ.isLoading ? <span className="inline-block w-28 h-8 bg-gray-200 rounded animate-pulse" /> : totalAssets}</div>
             <Link to="/assets" className="text-sm text-blue-600 mt-2 inline-block">View assets</Link>
           </div>
         </div>
 
-        <div className="p-4 rounded-lg shadow-sm bg-white flex items-center gap-4">
+        <div className="p-4 rounded-lg shadow bg-white flex items-center gap-4 border">
           <div className="p-3 rounded-full bg-yellow-50">
             <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 20c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" /></svg>
           </div>
           <div>
             <div className="text-sm text-gray-500">Upcoming maintenance</div>
-            <div className="text-2xl font-bold">{maintenanceQ.isLoading ? <span className="inline-block w-10 h-6 bg-gray-200 rounded animate-pulse" /> : (maintenanceQ.data?.totalElements ?? (maintenanceQ.data?.content?.length ?? 0))}</div>
+            <div className="text-2xl font-bold">{kpisQ.isLoading ? <span className="inline-block w-10 h-6 bg-gray-200 rounded animate-pulse" /> : upcomingMaintenanceCount}</div>
             <Link to="/maintenance" className="text-sm text-blue-600 mt-2 inline-block">View maintenance</Link>
           </div>
         </div>
 
-        <div className="p-4 rounded-lg shadow-sm bg-white">
+        <div className="p-4 rounded-lg shadow bg-white border">
           <div className="text-sm text-gray-500">Assets by status</div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-            {assetsQ.isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-5 bg-gray-200 rounded animate-pulse" />)
+            {kpisQ.isLoading || assetsQ.isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-6 bg-gray-200 rounded animate-pulse" />)
             ) : (
               Object.entries(byStatus).map(([k,v]) => (
                 <div key={k} className="flex items-center justify-between px-2 py-1 bg-gray-50 rounded">

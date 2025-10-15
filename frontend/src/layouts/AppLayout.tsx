@@ -22,6 +22,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               <Link className="hover:underline" to="/">Dashboard</Link>
               <Link className="hover:underline" to="/assets">Assets</Link>
               <Link className="hover:underline" to="/users">Users</Link>
+              <Link className="hover:underline" to="/profile">Profile</Link>
               <Link className="hover:underline" to="/departments">Departments</Link>
               <Link className="hover:underline" to="/maintenance">Maintenance</Link>
               <Link className="hover:underline" to="/locations">Locations</Link>
@@ -40,6 +41,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded shadow z-10">
                 <div className="px-4 py-2 border-b text-xs text-gray-500">{currentUser?.role ?? ''}</div>
+                <Link to="/profile" className="w-full block text-left px-4 py-2 hover:bg-gray-100 text-sm">Profile</Link>
                 <button
                   onClick={onLogout}
                   className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"

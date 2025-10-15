@@ -49,6 +49,8 @@ public class AuthControllerRegisterTests {
     AuthenticationManager authenticationManager;
     @MockBean
     UserService userService;
+        @MockBean
+        com.clims.backend.services.RefreshTokenService refreshTokenService;
 
     @BeforeEach
     void setupFilterChainPassThrough() throws Exception {

@@ -1,0 +1,29 @@
+{
+  "console": [],
+  "requests": [
+    {
+      "url": "http://localhost:5173/",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/assets/index-BEhi1mJe.js",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/assets/index-CN1SkqBD.css",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/assets/index-CN1SkqBD.css",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/assets/index-BEhi1mJe.js",
+      "status": 200
+    }
+  ]
+}

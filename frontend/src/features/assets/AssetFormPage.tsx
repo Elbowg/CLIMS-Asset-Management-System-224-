@@ -49,18 +49,31 @@ export const AssetFormPage: React.FC = () => {
         serialNumber: asset.serialNumber ?? '',
         make: asset.make ?? '',
         model: asset.model ?? '',
-        purchaseDate: '',
-        warrantyExpiryDate: '',
+        purchaseDate: (asset as any).purchaseDate ?? '',
+        warrantyExpiryDate: (asset as any).warrantyExpiryDate ?? '',
         locationId: undefined,
         vendorId: undefined
       });
     }
   }, [asset]);
 
+  // If creating new, prefill purchaseDate to today
+  React.useEffect(() => {
+    if (!isEdit) {
+      const today = new Date().toISOString().slice(0,10);
+      setForm(f => ({ ...f, purchaseDate: f.purchaseDate || today }));
+    }
+  }, [isEdit]);
+
   const updateField = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // basic validation
+    if (!form.serialNumber || !form.make || !form.model || !form.purchaseDate) {
+      toast.push('Please fill required fields (serial, make, model, purchase date)', 'error');
+      return;
+    }
     try {
       if (isEdit && id) {
         await api.assets.update(Number(id), {
@@ -121,21 +134,21 @@ export const AssetFormPage: React.FC = () => {
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">{isEdit ? 'Edit Asset' : 'New Asset'}</h1>
       {isLoading && <div>Loading...</div>}
-      <form onSubmit={onSubmit} className="max-w-lg">
+  <form onSubmit={onSubmit} className="max-w-lg">
         <div className="mb-3">
-          <label className="block text-sm mb-1">Serial Number</label>
+          <label className="block text-sm mb-1">Serial Number <span className="text-red-500">*</span></label>
           <input value={form.serialNumber} onChange={e => updateField('serialNumber', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Make</label>
+          <label className="block text-sm mb-1">Make <span className="text-red-500">*</span></label>
           <input value={form.make} onChange={e => updateField('make', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Model</label>
+          <label className="block text-sm mb-1">Model <span className="text-red-500">*</span></label>
           <input value={form.model} onChange={e => updateField('model', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Purchase Date</label>
+          <label className="block text-sm mb-1">Purchase Date <span className="text-red-500">*</span></label>
           <input type="date" value={form.purchaseDate} onChange={e => updateField('purchaseDate', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
@@ -157,7 +170,7 @@ export const AssetFormPage: React.FC = () => {
           </select>
         </div>
         <div className="flex gap-2">
-          <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">Save</button>
+          <button type="submit" disabled={!form.serialNumber || !form.make || !form.model || !form.purchaseDate} className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50">Save</button>
           <button type="button" onClick={() => nav('/assets')} className="px-3 py-1 border rounded">Cancel</button>
         </div>
       </form>

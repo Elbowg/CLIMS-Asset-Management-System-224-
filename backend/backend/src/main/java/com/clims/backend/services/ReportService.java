@@ -387,6 +387,41 @@ public class ReportService {
         return new ReportBytes(maintenancePdfInternal(list), truncated);
     }
 
+    // New KPI computation for dashboard
+    public ReportDtos.KpiResponse computeKpis() {
+        long total = assetRepository.count();
+
+        java.util.Map<String, Long> byStatus = new java.util.HashMap<>();
+        // Initialize with known statuses to ensure consistent keys
+        for (com.clims.backend.models.enums.AssetStatus s : com.clims.backend.models.enums.AssetStatus.values()) {
+            byStatus.put(s.name(), 0L);
+        }
+        // Ensure UNKNOWN key exists
+        byStatus.putIfAbsent("UNKNOWN", 0L);
+
+        // Use repository grouped counts to avoid loading all assets
+        java.util.List<Object[]> groups = assetRepository.countByStatusGroup();
+        if (groups != null) {
+            for (Object[] row : groups) {
+                Object statusObj = row[0];
+                Object countObj = row[1];
+                String key = statusObj != null ? statusObj.toString() : "UNKNOWN";
+                long cnt = 0L;
+                if (countObj instanceof Number) cnt = ((Number) countObj).longValue();
+                else if (countObj != null) {
+                    try { cnt = Long.parseLong(countObj.toString()); } catch (NumberFormatException e) { cnt = 0L; }
+                }
+                byStatus.put(key, cnt);
+            }
+        }
+
+        // upcoming maintenance: use repository count query
+        java.time.LocalDate today = java.time.LocalDate.now();
+        long upcoming = maintenanceRepository.countUpcomingFrom(today);
+
+        return new ReportDtos.KpiResponse(total, byStatus, upcoming);
+    }
+
     // Extracted internals to reuse for limited PDFs
     private byte[] inventoryPdfInternal(List<Asset> assets) {
         try (PDDocument doc = new PDDocument(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {

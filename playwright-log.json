@@ -1,0 +1,64 @@
+{
+  "console": [],
+  "requests": [
+    {
+      "url": "http://localhost:5173/",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/assets/index-BEhi1mJe.js",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/assets/index-CN1SkqBD.css",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/assets/index-CN1SkqBD.css",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/assets/index-BEhi1mJe.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/api/assets?page=0&size=100",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/api/maintenance?page=0&size=5",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/api/reports/kpis",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/api/auth/me",
+      "method": "GET"
+    },
+    {
+      "url": "http://localhost:5173/api/auth/me",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/api/reports/kpis",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/api/maintenance?page=0&size=5",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5173/api/assets?page=0&size=100",
+      "status": 200
+    }
+  ],
+  "login": {
+    "success": true
+  }
+}

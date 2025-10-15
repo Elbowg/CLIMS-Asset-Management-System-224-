@@ -74,11 +74,15 @@ export function createApi(getToken: () => string | null, opts: ApiClientOptions 
         request<{ token: string }>('/api/auth/login', { method: 'POST', body: JSON.stringify(body) }, {}, opts),
       register: (body: { username: string; password: string; email?: string }) =>
         request('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }, {}, opts),
-      me: () => request<paths['/api/auth/me']['get']['responses']['200']['content']['*/*']>('/api/auth/me', { method: 'GET' }, { token: getToken() }, opts)
+      me: () => request<paths['/api/auth/me']['get']['responses']['200']['content']['*/*']>('/api/auth/me', { method: 'GET' }, { token: getToken() }, opts),
+      changePassword: (body: components['schemas']['ChangePasswordRequest']) => request('/api/auth/change-password', { method: 'POST', body: JSON.stringify(body) }, { token: getToken() }, opts),
+      refresh: (body: { refreshToken: string }) => request<{ token: string }>('/api/auth/refresh', { method: 'POST', body: JSON.stringify(body) }, {}, opts),
+      logout: (body: { refreshToken: string }) => request('/api/auth/logout', { method: 'POST', body: JSON.stringify(body) }, {}, opts)
     },
     users: {
       list: (page = 0, size = 20) => request<components['schemas']['PageResponseUserResponse']>(`/api/users?page=${page}&size=${size}`, { method: 'GET' }, { token: getToken() }, opts),
       getById: (id: number) => request<components['schemas']['UserResponse']>(`/api/users/${id}`, { method: 'GET' }, { token: getToken() }, opts)
+      , resetPassword: (id: number, body: components['schemas']['ResetPasswordRequest']) => request('/api/users/' + id + '/reset-password', { method: 'POST', body: JSON.stringify(body) }, { token: getToken() }, opts)
     },
     assets: {
       list: (page = 0, size = 20, filters: Record<string, any> = {}) => {
@@ -107,6 +111,7 @@ export function createApi(getToken: () => string | null, opts: ApiClientOptions 
       maintenanceCsv: (filter: components['schemas']['MaintenanceFilter']) => fetchBlob('/api/reports/maintenance/csv', { method: 'POST', body: JSON.stringify(filter), headers: { 'Content-Type': 'application/json' } }, { token: getToken() }, opts),
       inventoryPdf: (filter: components['schemas']['InventoryFilter']) => fetchBlob('/api/reports/inventory/pdf', { method: 'POST', body: JSON.stringify(filter), headers: { 'Content-Type': 'application/json' } }, { token: getToken() }, opts),
       maintenancePdf: (filter: components['schemas']['MaintenanceFilter']) => fetchBlob('/api/reports/maintenance/pdf', { method: 'POST', body: JSON.stringify(filter), headers: { 'Content-Type': 'application/json' } }, { token: getToken() }, opts)
+      , kpis: () => request<components['schemas']['KpiResponse']>('/api/reports/kpis', { method: 'GET' }, { token: getToken() }, opts)
     }
   };
 }

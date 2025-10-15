@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import com.clims.backend.models.entities.AppUser;
 import com.clims.backend.services.UserService;
 import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -67,5 +68,16 @@ public class UserController {
     public ResponseEntity<UserDtos.UserResponse> updateDepartment(@PathVariable Long id, @RequestBody UserDtos.UpdateDepartmentRequest req) {
         AppUser updated = userService.updateDepartment(id, req.departmentId());
         return ResponseEntity.ok(new UserDtos.UserResponse(updated.getId(), updated.getUsername(), updated.getEmail(), updated.getRole().name(), updated.getDepartment() != null ? updated.getDepartment().getName() : null));
+    }
+
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> resetPassword(@PathVariable Long id, @RequestBody UserDtos.ResetPasswordRequest req) {
+        try {
+            userService.resetPassword(id, req.newPassword());
+            return ResponseEntity.ok(Map.of("message", "Password reset"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
     }
 }

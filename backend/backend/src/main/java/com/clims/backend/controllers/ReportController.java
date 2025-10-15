@@ -116,6 +116,13 @@ public class ReportController {
         return builder.body(result.bytes());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AUDITOR','MANAGER','IT_STAFF')")
+    @GetMapping(value = "/kpis", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ReportDtos.KpiResponse> kpis() {
+        ReportDtos.KpiResponse r = reportService.computeKpis();
+        return ResponseEntity.ok(r);
+    }
+
     private static boolean isInventoryUnfiltered(ReportDtos.InventoryFilter f) {
         if (f == null) return true;
         return f.status() == null && f.vendorId() == null && f.departmentId() == null && f.purchasedFrom() == null && f.purchasedTo() == null;

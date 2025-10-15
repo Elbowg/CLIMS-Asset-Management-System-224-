@@ -22,4 +22,11 @@ public class ReportDtos {
             LocalDate from,
             LocalDate to
     ) {}
+
+    // KPI response for dashboard: total assets, counts by status, upcoming maintenance count
+    public record KpiResponse(
+            long totalAssets,
+            java.util.Map<String, Long> assetsByStatus,
+            long upcomingMaintenance
+    ) {}
 }

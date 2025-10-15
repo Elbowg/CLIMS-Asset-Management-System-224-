@@ -54,6 +54,10 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
+    public AppUser findByUsername(String username) {
+        return userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
     public Page<AppUser> search(Pageable pageable, Role role, Long departmentId, String q) {
         // Simple filtering using repository methods or in-memory filter fallback
         // For now, fetch page and filter stream as needed (could be optimized with specs/queries)
@@ -88,5 +92,35 @@ public class UserService {
             user.setDepartment(dept);
         }
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(Long id, String currentPassword, String newPassword) {
+        AppUser user = get(id);
+        if (currentPassword == null || newPassword == null) throw new IllegalArgumentException("Passwords required");
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        // Validate new password strength
+        validatePasswordStrength(newPassword);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    private void validatePasswordStrength(String pwd) {
+        if (pwd == null) throw new IllegalArgumentException("New password required");
+        if (pwd.length() < 8) throw new IllegalArgumentException("Password must be at least 8 characters");
+        if (!pwd.chars().anyMatch(Character::isUpperCase)) throw new IllegalArgumentException("Password must contain an uppercase letter");
+        if (!pwd.chars().anyMatch(Character::isLowerCase)) throw new IllegalArgumentException("Password must contain a lowercase letter");
+        if (!pwd.chars().anyMatch(Character::isDigit)) throw new IllegalArgumentException("Password must contain a digit");
+        if (pwd.chars().allMatch(ch -> Character.isLetterOrDigit(ch))) throw new IllegalArgumentException("Password must contain a special character");
+    }
+
+    @Transactional
+    public void resetPassword(Long id, String newPassword) {
+        AppUser user = get(id);
+        if (newPassword == null) throw new IllegalArgumentException("New password required");
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

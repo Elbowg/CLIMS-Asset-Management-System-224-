@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 interface AuthState {
   token: string | null;
   currentUser: User | null;
-  login: (token: string) => void;
+  login: (token: string, refresh?: string | null) => void;
   logout: () => void;
 }
 
@@ -21,13 +21,29 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('clims_token'));
+  const [refreshToken, setRefreshToken] = useState<string | null>(() => localStorage.getItem('clims_refresh'));
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const nav = useNavigate();
 
   // Create Api instance that will call logout on 401
-  const api = createApi(() => token, { onUnauthorized: () => {
-    setToken(null); localStorage.removeItem('clims_token'); setCurrentUser(null); nav('/login');
+  const api = createApi(() => token, { onUnauthorized: async () => {
+    // attempt a refresh using stored refresh token
+    try {
+      if (refreshToken) {
+        const res = await fetch('/api/auth/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken }) });
+        if (res.ok) {
+          const body = await res.json();
+          const newToken = body.token;
+          setToken(newToken);
+          localStorage.setItem('clims_token', newToken);
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    setToken(null); localStorage.removeItem('clims_token'); setCurrentUser(null); localStorage.removeItem('clims_refresh'); setRefreshToken(null); nav('/login');
   } });
 
   // Fetch user info after login or when token changes
@@ -39,15 +55,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
-  const login = useCallback((t: string) => {
+  const login = useCallback((t: string, r: string | null = null) => {
     setToken(t);
     localStorage.setItem('clims_token', t);
+    if (r) { setRefreshToken(r); localStorage.setItem('clims_refresh', r); }
   }, []);
 
   const logout = useCallback(() => {
     setToken(null);
     localStorage.removeItem('clims_token');
     setCurrentUser(null);
+    localStorage.removeItem('clims_refresh');
+    setRefreshToken(null);
     nav('/login');
   }, [nav]);
 

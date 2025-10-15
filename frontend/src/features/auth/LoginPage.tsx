@@ -18,7 +18,8 @@ export const LoginPage: React.FC = () => {
     setError(null);
     try {
       const res = await api.auth.login({ username, password });
-      login(res.token);
+      // backend returns { token, refreshToken }
+      login(res.token, (res as any).refreshToken ?? null);
       nav('/');
     } catch (err: any) {
       // ApiError includes body which may have { error: '...' }
