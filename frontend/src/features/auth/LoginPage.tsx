@@ -17,14 +17,16 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.auth.login({ username, password });
-      // backend returns { token, refreshToken }
-      login(res.token, (res as any).refreshToken ?? null);
+  const res = await api.auth.login({ username, password });
+  // backend returns { token, refreshToken }
+  // narrow the shape we expect from the auth.login response
+  const refreshToken = (res as unknown as { refreshToken?: string }).refreshToken ?? null;
+  login(res.token, refreshToken);
       nav('/');
     } catch (err: any) {
       // ApiError includes body which may have { error: '...' }
-      const body = err?.body;
-      if (body && typeof body === 'object' && 'error' in body) setError((body as any).error as string);
+  const body = err?.body;
+  if (body && typeof body === 'object' && 'error' in body) setError((body as any).error as string);
       else setError(err.message || 'Login failed');
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthContext';
 import { createApi } from '../../api/client';
+import type { components } from '../../api/schema';
 import { useToast } from '../../components/ToastContext';
 
 export const AssetFormPage: React.FC = () => {
@@ -22,7 +23,7 @@ export const AssetFormPage: React.FC = () => {
         api.lookups.locations(),
         api.lookups.vendors()
       ]);
-      return { departments, locations, vendors } as { departments: any[]; locations: any[]; vendors: any[] };
+      return { departments, locations, vendors } as { departments: components['schemas']['Department'][]; locations: components['schemas']['Location'][]; vendors: components['schemas']['Vendor'][] };
     },
     enabled: !!token
   });
@@ -40,19 +41,23 @@ export const AssetFormPage: React.FC = () => {
     purchaseDate: '',
     warrantyExpiryDate: '',
     locationId: undefined as number | undefined,
-    vendorId: undefined as number | undefined
+    vendorId: undefined as number | undefined,
+    departmentId: undefined as number | undefined
   });
 
   React.useEffect(() => {
     if (asset) {
+      // asset comes from the API and matches components['schemas']['AssetResponse'] shape
+      const a = asset as components['schemas']['AssetResponse'] & Partial<components['schemas']['CreateAssetRequest']>;
       setForm({
-        serialNumber: asset.serialNumber ?? '',
-        make: asset.make ?? '',
-        model: asset.model ?? '',
-        purchaseDate: (asset as any).purchaseDate ?? '',
-        warrantyExpiryDate: (asset as any).warrantyExpiryDate ?? '',
-        locationId: undefined,
-        vendorId: undefined
+        serialNumber: a.serialNumber ?? '',
+        make: a.make ?? '',
+        model: a.model ?? '',
+        purchaseDate: (a.purchaseDate as string) ?? '',
+        warrantyExpiryDate: (a.warrantyExpiryDate as string) ?? '',
+        locationId: (a.locationId as number) ?? undefined,
+        vendorId: (a.vendorId as number) ?? undefined,
+        departmentId: (a.departmentId as number) ?? undefined
       });
     }
   }, [asset]);
@@ -75,15 +80,16 @@ export const AssetFormPage: React.FC = () => {
       return;
     }
     try {
-      if (isEdit && id) {
+        if (isEdit && id) {
         await api.assets.update(Number(id), {
           make: form.make || undefined,
           model: form.model || undefined,
           warrantyExpiryDate: form.warrantyExpiryDate || undefined,
-          locationId: form.locationId
+          locationId: form.locationId,
+          departmentId: form.departmentId
         });
         // update cached asset detail
-        qc.setQueryData(['asset', Number(id), token], (prev: any) => ({ ...(prev ?? {}), make: form.make, model: form.model, warrantyExpiryDate: form.warrantyExpiryDate, locationId: form.locationId }));
+        qc.setQueryData(['asset', Number(id), token], (prev: components['schemas']['AssetResponse'] | undefined) => ({ ...(prev ?? {}), make: form.make, model: form.model, warrantyExpiryDate: form.warrantyExpiryDate, locationId: form.locationId } as components['schemas']['AssetResponse']));
         // update any assets list caches that start with ['assets']
   qc.setQueriesData({ queryKey: ['assets'] }, (old: any) => {
           if (!old) return old;
@@ -106,16 +112,17 @@ export const AssetFormPage: React.FC = () => {
           purchaseDate: form.purchaseDate,
           warrantyExpiryDate: form.warrantyExpiryDate || undefined,
           locationId: form.locationId,
-          vendorId: form.vendorId
+          vendorId: form.vendorId,
+          departmentId: form.departmentId
         });
         // optimistically insert into any cached assets lists
   qc.setQueriesData({ queryKey: ['assets'] }, (old: any) => {
           if (!old) return old;
           if (Array.isArray(old)) {
-            return [created as any, ...old];
+            return [created, ...old];
           }
           if (old.content && Array.isArray(old.content)) {
-            return { ...old, content: [created as any, ...(old.content || [])], totalElements: ((old.totalElements || 0) + 1) };
+            return { ...old, content: [created, ...(old.content || [])], totalElements: ((old.totalElements || 0) + 1) };
           }
           return old;
         });
@@ -160,6 +167,13 @@ export const AssetFormPage: React.FC = () => {
           <select className="w-full border px-2 py-1" value={form.locationId ?? ''} onChange={e => updateField('locationId', e.target.value ? Number(e.target.value) : undefined)}>
             <option value="">-- select --</option>
             {(lookups?.locations ?? []).map((l: any) => <option value={l.id} key={l.id}>{l.name}</option>)}
+          </select>
+        </div>
+        <div className="mb-3">
+          <label className="block text-sm mb-1">Department</label>
+          <select className="w-full border px-2 py-1" value={form.departmentId ?? ''} onChange={e => updateField('departmentId', e.target.value ? Number(e.target.value) : undefined)}>
+            <option value="">-- select --</option>
+            {(lookups?.departments ?? []).map((d: any) => <option value={d.id} key={d.id}>{d.name}</option>)}
           </select>
         </div>
         <div className="mb-3">

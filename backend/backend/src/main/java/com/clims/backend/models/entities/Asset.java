@@ -54,6 +54,9 @@ public class Asset extends Auditable {
     @ManyToOne
     @JoinColumn(name = "location_id")
     private Location location;
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     @ManyToOne
     @JoinColumn(name = "vendor_id")

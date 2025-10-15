@@ -28,14 +28,16 @@ public class AssetService {
     private final AssetRepository assetRepository;
     private final LocationRepository locationRepository;
     private final VendorRepository vendorRepository;
+    private final DepartmentRepository departmentRepository;
     private final AppUserRepository userRepository;
     private final AuditLogService auditLogService;
     private final ModelMapper mapper;
 
-    public AssetService(AssetRepository assetRepository, LocationRepository locationRepository, VendorRepository vendorRepository, AppUserRepository userRepository, AuditLogService auditLogService, ModelMapper mapper) {
+    public AssetService(AssetRepository assetRepository, LocationRepository locationRepository, VendorRepository vendorRepository, DepartmentRepository departmentRepository, AppUserRepository userRepository, AuditLogService auditLogService, ModelMapper mapper) {
         this.assetRepository = assetRepository;
         this.locationRepository = locationRepository;
         this.vendorRepository = vendorRepository;
+        this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
         this.mapper = mapper;
@@ -55,6 +57,9 @@ public class AssetService {
         if (req.vendorId() != null) {
             asset.setVendor(vendorRepository.findById(req.vendorId()).orElseThrow(() -> new NotFoundException("Vendor not found")));
         }
+        if (req.departmentId() != null) {
+            asset.setDepartment(departmentRepository.findById(req.departmentId()).orElseThrow(() -> new NotFoundException("Department not found")));
+        }
         asset.setStatus(AssetStatus.AVAILABLE);
         asset.setAssetTag(generateAssetTag());
         Asset saved = assetRepository.save(asset);
@@ -67,7 +72,7 @@ public class AssetService {
     public Page<Asset> search(Pageable pageable, AssetStatus status, Long departmentId, Long locationId, Long vendorId, String q) {
         Specification<Asset> spec = Specification.where(null);
         if (status != null) spec = spec.and((root, cq, cb) -> cb.equal(root.get("status"), status));
-    if (departmentId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("assignedUser", JoinType.LEFT).join("department", JoinType.LEFT).get("id"), departmentId));
+    if (departmentId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("department", JoinType.LEFT).get("id"), departmentId));
     if (locationId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("location", JoinType.LEFT).get("id"), locationId));
     if (vendorId != null) spec = spec.and((root, cq, cb) -> cb.equal(root.join("vendor", JoinType.LEFT).get("id"), vendorId));
         if (q != null && !q.isBlank()) {
@@ -92,6 +97,7 @@ public class AssetService {
         if (req.warrantyExpiryDate() != null) asset.setWarrantyExpiryDate(req.warrantyExpiryDate());
         if (req.status() != null) asset.setStatus(req.status());
     if (req.locationId() != null) asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow(() -> new NotFoundException("Location not found")));
+    if (req.departmentId() != null) asset.setDepartment(departmentRepository.findById(req.departmentId()).orElseThrow(() -> new NotFoundException("Department not found")));
         auditLogService.log("Asset", asset.getId(), "UPDATE", "Asset updated", actor);
         return assetRepository.save(asset);
     }

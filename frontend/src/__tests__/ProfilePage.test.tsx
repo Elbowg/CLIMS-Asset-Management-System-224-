@@ -11,8 +11,12 @@ describe('ProfilePage', () => {
   it('submits change password and logs out', async () => {
   const changePassword = vi.fn(() => Promise.resolve());
   const refresh = vi.fn(() => Promise.resolve({ token: 'newtoken' }));
-  // @ts-ignore override Api for the test
-  Api.auth = { ...Api.auth, changePassword, refresh } as any;
+  // override Api.auth with a typed mock for the functions we need
+  Api.auth = {
+    ...Api.auth,
+    changePassword: changePassword as unknown as typeof Api.auth.changePassword,
+    refresh: refresh as unknown as typeof Api.auth.refresh
+  } as typeof Api.auth;
 
     render(
       <BrowserRouter>

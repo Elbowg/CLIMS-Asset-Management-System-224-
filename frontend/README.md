@@ -85,3 +85,5 @@ If the backend is running on a non-default port, set `VITE_API_BASE` accordingly
 
 ---
 This scaffold will evolve as the frontend develops; update this README accordingly.
+
+http://localhost:5173/assets/new

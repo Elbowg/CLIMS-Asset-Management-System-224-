@@ -27,15 +27,16 @@ const ProfilePage: React.FC = () => {
       // Send both currentPassword and newPassword to server for verification
       const res = await Api.auth.changePassword({ currentPassword, newPassword });
       // replace stored refresh token if server returned a rotated token
-      if ((res as any).refreshToken) {
-        localStorage.setItem('clims_refresh', (res as any).refreshToken);
+      const rotated = (res as unknown as { refreshToken?: string }).refreshToken;
+      if (rotated) {
+        localStorage.setItem('clims_refresh', rotated);
       }
       // Attempt to refresh access token using stored refresh token so user stays logged in
       const refresh = localStorage.getItem('clims_refresh');
       if (refresh) {
         try {
-          const res = await createApi(() => null).auth.refresh({ refreshToken: refresh });
-          login(res.token, refresh);
+          const r = await createApi(() => null).auth.refresh({ refreshToken: refresh });
+          login(r.token, refresh);
           toast.push('Password changed', 'success');
           return;
         } catch (e) {

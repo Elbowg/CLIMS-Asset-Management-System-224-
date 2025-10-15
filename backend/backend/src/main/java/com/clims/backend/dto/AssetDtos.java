@@ -14,7 +14,8 @@ public class AssetDtos {
             @NotNull LocalDate purchaseDate,
             LocalDate warrantyExpiryDate,
             Long locationId,
-            Long vendorId
+            Long vendorId,
+            Long departmentId
     ){}
 
     public record UpdateAssetRequest(
@@ -22,7 +23,8 @@ public class AssetDtos {
             String model,
             LocalDate warrantyExpiryDate,
             AssetStatus status,
-            Long locationId
+            Long locationId,
+            Long departmentId
     ){}
 
     public record AssignAssetRequest(
@@ -39,6 +41,7 @@ public class AssetDtos {
             AssetStatus status,
             String assignedTo,
             String location,
-            String vendor
+            String vendor,
+            String department
     ){}
 }
