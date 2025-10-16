@@ -48,6 +48,7 @@ export const AssetDetailPage: React.FC = () => {
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div className="border p-3">
               <div><strong>Serial:</strong> {data.serialNumber ?? '-'}</div>
+              <div><strong>Type:</strong> {data.type ?? '-'}</div>
               <div><strong>Make:</strong> {data.make ?? '-'}</div>
               <div><strong>Model:</strong> {data.model ?? '-'}</div>
               <div><strong>Status:</strong> {data.status ?? '-'}</div>

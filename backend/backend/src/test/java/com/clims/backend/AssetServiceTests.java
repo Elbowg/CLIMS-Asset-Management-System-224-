@@ -40,8 +40,8 @@ public class AssetServiceTests {
         });
 
     AssetService svc = new AssetService(assetRepo, locRepo, vendorRepo, deptRepo, userRepo, audit, mapper);
-    AssetDtos.CreateAssetRequest req = new AssetDtos.CreateAssetRequest(
-        "SN-1", "Dell", "XPS", LocalDate.now(), null, null, null, null
+        AssetDtos.CreateAssetRequest req = new AssetDtos.CreateAssetRequest(
+            "SN-123", "Acme", "ModelX", LocalDate.of(2020, 1, 1), LocalDate.of(2023, 1, 1), com.clims.backend.models.enums.AssetType.DESKTOP, null, null, null
     );
         AppUser actor = new AppUser();
         actor.setUsername("tester");

@@ -459,14 +459,14 @@ export interface components {
         UpdateAssetRequest: {
             make?: string;
             model?: string;
+            /** @enum {string} */
+            type?: "DESKTOP" | "LAPTOP";
             /** Format: date */
             warrantyExpiryDate?: string;
             /** @enum {string} */
             status?: "AVAILABLE" | "ASSIGNED" | "UNDER_REPAIR" | "RETIRED";
             /** Format: int64 */
             locationId?: number;
-            /** Format: int64 */
-            departmentId?: number;
         };
         AssetResponse: {
             /** Format: int64 */
@@ -475,6 +475,8 @@ export interface components {
             serialNumber?: string;
             make?: string;
             model?: string;
+            /** @enum {string} */
+            type?: "DESKTOP" | "LAPTOP";
             /** @enum {string} */
             status?: "AVAILABLE" | "ASSIGNED" | "UNDER_REPAIR" | "RETIRED";
             assignedTo?: string;
@@ -550,6 +552,8 @@ export interface components {
             serialNumber: string;
             make: string;
             model: string;
+            /** @enum {string} */
+            type: "DESKTOP" | "LAPTOP";
             /** Format: date */
             purchaseDate: string;
             /** Format: date */
@@ -558,8 +562,6 @@ export interface components {
             locationId?: number;
             /** Format: int64 */
             vendorId?: number;
-            /** Format: int64 */
-            departmentId?: number;
         };
         AssignAssetRequest: {
             /** Format: int64 */

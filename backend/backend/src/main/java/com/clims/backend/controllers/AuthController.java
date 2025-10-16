@@ -31,6 +31,9 @@ public class AuthController {
 
     private final RefreshTokenService refreshTokenService;
 
+    // Make LockoutProperties optional so @WebMvcTest slices that don't include configuration properties won't fail
+    private com.clims.backend.config.LockoutProperties lockoutProperties;
+
     public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, CurrentUserService currentUserService, UserService userService, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
@@ -39,10 +42,24 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setLockoutProperties(com.clims.backend.config.LockoutProperties lockoutProperties) {
+        this.lockoutProperties = lockoutProperties;
+    }
+
     public record LoginRequest(String username, String password) {}
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Validated @RequestBody LoginRequest request) {
+    final int MAX_ATTEMPTS = lockoutProperties != null ? lockoutProperties.getMaxAttempts() : 4;
+    final long LOCKOUT_MINUTES = lockoutProperties != null ? lockoutProperties.getMinutes() : 3;
+
+        // Check if user is currently locked
+        AppUser maybeUser = userService.findByUsernameOrNull(request.username());
+        if (maybeUser != null && userService.isLocked(maybeUser)) {
+            return ResponseEntity.status(423).body(Map.of("error", "Account temporarily locked. Try again later."));
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.username(), request.password()));
@@ -53,8 +70,16 @@ public class AuthController {
             // create refresh token
             AppUser appUser = userService.findByUsername(user.getUsername());
             RefreshToken rt = refreshTokenService.createRefreshToken(appUser);
+            // reset failed login counters on successful login
+            userService.resetFailedLogins(appUser);
             return ResponseEntity.ok(Map.of("token", token, "refreshToken", rt.getToken()));
         } catch (BadCredentialsException ex) {
+            // increment failed attempts and possibly lock
+            userService.recordFailedLogin(request.username(), MAX_ATTEMPTS, LOCKOUT_MINUTES);
+            AppUser after = userService.findByUsernameOrNull(request.username());
+            if (after != null && userService.isLocked(after)) {
+                return ResponseEntity.status(423).body(Map.of("error", "Account temporarily locked due to multiple failed login attempts. Try again later."));
+            }
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         }
     }

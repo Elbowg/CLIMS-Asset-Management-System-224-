@@ -80,4 +80,11 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
     }
+
+    @PostMapping("/{id}/unlock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> unlockUser(@PathVariable Long id) {
+        AppUser updated = userService.unlockUser(id);
+        return ResponseEntity.ok(new UserDtos.UserResponse(updated.getId(), updated.getUsername(), updated.getEmail(), updated.getRole().name(), updated.getDepartment() != null ? updated.getDepartment().getName() : null));
+    }
 }

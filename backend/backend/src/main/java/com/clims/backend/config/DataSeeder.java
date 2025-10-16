@@ -22,6 +22,7 @@ public class DataSeeder {
                                DepartmentRepository departments,
                                LocationRepository locations,
                                VendorRepository vendors,
+                               com.clims.backend.repositories.AssetRepository assets,
                                PasswordEncoder passwordEncoder) {
         return args -> {
             // Departments
@@ -67,6 +68,27 @@ public class DataSeeder {
                 admin.setRole(Role.ADMIN);
                 users.save(admin);
             }
+
+            // Ensure ASSET-005 exists and is assigned to admin
+            users.findByUsername("admin").ifPresent(adminUser -> {
+                assets.findByAssetTag("ASSET-005").ifPresentOrElse(a -> {
+                    a.setAssignedUser(adminUser);
+                    assets.save(a);
+                }, () -> {
+                    com.clims.backend.models.entities.Asset a = new com.clims.backend.models.entities.Asset();
+                    a.setAssetTag("ASSET-005");
+                    a.setSerialNumber("SN-005-ASG");
+                    a.setMake("DevBook");
+                    a.setModel("Pro 14");
+                    a.setPurchaseDate(java.time.LocalDate.of(2022, 3, 15));
+                    a.setWarrantyExpiryDate(java.time.LocalDate.of(2024, 3, 15));
+                    a.setStatus(com.clims.backend.models.enums.AssetStatus.ASSIGNED);
+                    a.setLocation(locations.findAll().stream().filter(l -> "Headquarters".equals(l.getName())).findFirst().orElse(null));
+                    a.setVendor(vendors.findAll().stream().filter(v -> "Default Vendor".equals(v.getName())).findFirst().orElse(null));
+                    a.setAssignedUser(adminUser);
+                    assets.save(a);
+                });
+            });
         };
     }
 }

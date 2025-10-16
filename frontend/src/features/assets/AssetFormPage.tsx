@@ -39,6 +39,7 @@ export const AssetFormPage: React.FC = () => {
     serialNumber: '',
     make: '',
     model: '',
+    type: '',
     purchaseDate: '',
     warrantyExpiryDate: '',
     locationId: undefined as number | undefined,
@@ -54,11 +55,12 @@ export const AssetFormPage: React.FC = () => {
         serialNumber: a.serialNumber ?? '',
         make: a.make ?? '',
         model: a.model ?? '',
+        type: (a as any).type ?? '',
         purchaseDate: (a.purchaseDate as string) ?? '',
         warrantyExpiryDate: (a.warrantyExpiryDate as string) ?? '',
         locationId: (a.locationId as number) ?? undefined,
         vendorId: (a.vendorId as number) ?? undefined,
-        departmentId: (a.departmentId as number) ?? undefined
+        departmentId: ((a as any).departmentId as number) ?? undefined
       });
     }
   }, [asset]);
@@ -85,8 +87,8 @@ export const AssetFormPage: React.FC = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // basic validation
-    if (!form.serialNumber || !form.make || !form.model || !form.purchaseDate) {
-      toast.push('Please fill required fields (serial, make, model, purchase date)', 'error');
+    if (!form.serialNumber || !form.make || !form.model || !form.purchaseDate || !form.type) {
+      toast.push('Please fill required fields (serial, make, model, purchase date, type)', 'error');
       return;
     }
     try {
@@ -95,8 +97,7 @@ export const AssetFormPage: React.FC = () => {
           make: form.make || undefined,
           model: form.model || undefined,
           warrantyExpiryDate: form.warrantyExpiryDate || undefined,
-          locationId: form.locationId,
-          departmentId: form.departmentId
+          locationId: form.locationId
         });
         // update cached asset detail
         qc.setQueryData(['asset', Number(id), token], (prev: components['schemas']['AssetResponse'] | undefined) => ({ ...(prev ?? {}), make: form.make, model: form.model, warrantyExpiryDate: form.warrantyExpiryDate, locationId: form.locationId } as components['schemas']['AssetResponse']));
@@ -115,16 +116,17 @@ export const AssetFormPage: React.FC = () => {
         toast.push('Asset updated', 'success');
         nav(`/assets/${id}`);
       } else {
-        const created = await api.assets.create({
+        const created = await api.assets.create(({
           serialNumber: form.serialNumber,
           make: form.make,
           model: form.model,
+          type: form.type,
           purchaseDate: form.purchaseDate,
           warrantyExpiryDate: form.warrantyExpiryDate || undefined,
           locationId: form.locationId,
           vendorId: form.vendorId,
           departmentId: form.departmentId
-        });
+        } as any));
         // optimistically insert into any cached assets lists
   qc.setQueriesData({ queryKey: ['assets'] }, (old: any) => {
           if (!old) return old;
@@ -165,6 +167,14 @@ export const AssetFormPage: React.FC = () => {
           <input value={form.model} onChange={e => updateField('model', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
+          <label className="block text-sm mb-1">Type <span className="text-red-500">*</span></label>
+          <select value={form.type} onChange={e => updateField('type', e.target.value)} className="w-full border px-2 py-1">
+            <option value="">-- select --</option>
+            <option value="DESKTOP">Desktop</option>
+            <option value="LAPTOP">Laptop</option>
+          </select>
+        </div>
+        <div className="mb-3">
           <label className="block text-sm mb-1">Purchase Date <span className="text-red-500">*</span></label>
           <input type="date" value={form.purchaseDate} onChange={e => updateField('purchaseDate', e.target.value)} className="w-full border px-2 py-1" />
         </div>
@@ -197,7 +207,7 @@ export const AssetFormPage: React.FC = () => {
           </select>
         </div>
         <div className="flex gap-2">
-          <button type="submit" disabled={!form.serialNumber || !form.make || !form.model || !form.purchaseDate} className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50">Save</button>
+          <button type="submit" disabled={!form.serialNumber || !form.make || !form.model || !form.purchaseDate || !form.type} className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50">Save</button>
           <button type="button" onClick={() => nav('/assets')} className="px-3 py-1 border rounded">Cancel</button>
         </div>
       </form>

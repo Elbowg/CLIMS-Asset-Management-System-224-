@@ -2,6 +2,7 @@ package com.clims.backend.models.entities;
 
 import com.clims.backend.models.base.Auditable;
 import com.clims.backend.models.enums.AssetStatus;
+import com.clims.backend.models.enums.AssetType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -46,6 +47,10 @@ public class Asset extends Auditable {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AssetStatus status = AssetStatus.AVAILABLE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private AssetType type = AssetType.DESKTOP;
 
     @ManyToOne
     @JoinColumn(name = "assigned_user_id")

@@ -38,4 +38,11 @@ public class AppUser extends Auditable {
     @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
+
+    // failed login tracking
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts = 0;
+
+    @Column(name = "lockout_until")
+    private java.time.Instant lockoutUntil;
 }

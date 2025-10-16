@@ -56,7 +56,7 @@ class AssetServiceDepartmentScopeTests {
 
         when(assetRepository.findById(100L)).thenReturn(java.util.Optional.of(a));
 
-        assertThatThrownBy(() -> service.update(100L, new com.clims.backend.dto.AssetDtos.UpdateAssetRequest(null,null,null,null,null,null), manager)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    assertThatThrownBy(() -> service.update(100L, new com.clims.backend.dto.AssetDtos.UpdateAssetRequest(null,null,null,null,null,null,null), manager)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
 
     @Test
@@ -67,7 +67,7 @@ class AssetServiceDepartmentScopeTests {
         when(assetRepository.findById(200L)).thenReturn(java.util.Optional.of(a));
         when(assetRepository.save(any())).thenReturn(a);
 
-        service.update(200L, new com.clims.backend.dto.AssetDtos.UpdateAssetRequest(null,null,null,null,null,null), admin);
+    service.update(200L, new com.clims.backend.dto.AssetDtos.UpdateAssetRequest(null,null,null,null,null,null,null), admin);
 
         verify(assetRepository, times(1)).save(a);
     }

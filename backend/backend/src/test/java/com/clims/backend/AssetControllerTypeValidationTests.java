@@ -23,6 +23,8 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import com.clims.backend.models.entities.AppUser;
 import com.clims.backend.security.Role;
+import com.clims.backend.models.entities.Asset;
+import com.clims.backend.models.enums.AssetType;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
@@ -33,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = AssetController.class)
 @Import(GlobalExceptionHandler.class)
 @WithMockUser(roles = {"ADMIN"})
-class AssetControllerValidationTests {
+class AssetControllerTypeValidationTests {
 
     @Autowired
     MockMvc mvc;
@@ -84,23 +86,31 @@ class AssetControllerValidationTests {
     }
 
     @Test
-    void create_duplicateSerial_returns409() throws Exception {
-        // Simulate service throwing when duplicate serial detected
-        given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .willThrow(new IllegalStateException("Serial number already exists"));
-
-    String payload = "{\"serialNumber\":\"DUP-SN\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\",\"type\":\"DESKTOP\"}";
-    mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error").value("Serial number already exists"));
+    void create_missingType_returns400() throws Exception {
+        String payload = "{\"serialNumber\":\"SN-001\",\"make\":\"Dell\",\"model\":\"XPS\",\"purchaseDate\":\"2024-01-01\"}";
+        mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.type").exists());
     }
 
     @Test
-    void create_missingSerial_returns400() throws Exception {
-        // Missing serialNumber should trigger validation error
-    String payload = "{\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\",\"type\":\"DESKTOP\"}";
-    mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload))
-        .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.serialNumber").exists());
+    void create_withType_returns200() throws Exception {
+        String payload = "{\"serialNumber\":\"SN-002\",\"make\":\"Dell\",\"model\":\"Latitude\",\"purchaseDate\":\"2024-01-01\",\"type\":\"LAPTOP\"}";
+
+        Asset saved = new Asset();
+        saved.setId(100L);
+        saved.setAssetTag("AT-100");
+        saved.setSerialNumber("SN-002");
+        saved.setMake("Dell");
+        saved.setModel("Latitude");
+        saved.setPurchaseDate(java.time.LocalDate.parse("2024-01-01"));
+        saved.setType(AssetType.LAPTOP);
+
+        given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(saved);
+
+        mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(100))
+                .andExpect(jsonPath("$.type").value("LAPTOP"));
     }
 }

@@ -186,7 +186,7 @@ class AssetControllerSecurityTests {
         given(currentUserService.requireCurrentUser()).willReturn(mgr);
         given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"));
 
-        String payload = "{\"serialNumber\":\"SN123\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":2}";
+    String payload = "{\"serialNumber\":\"SN123\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":2,\"type\":\"DESKTOP\"}";
         mvc.perform(post("/api/assets").contentType(MediaType.APPLICATION_JSON).content(payload))
                 .andExpect(status().isForbidden());
     }
@@ -203,7 +203,7 @@ class AssetControllerSecurityTests {
     @WithMockUser(roles = {"ADMIN"})
     void admin_can_create_update_assign_dispose() throws Exception {
         // create
-    String payload = "{\"serialNumber\":\"SN1\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\"}";
+    String payload = "{\"serialNumber\":\"SN1\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\",\"type\":\"DESKTOP\"}";
     given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
     mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isOk());
 
@@ -225,7 +225,7 @@ class AssetControllerSecurityTests {
     @Test
     @WithMockUser(roles = {"IT_STAFF"})
     void itStaff_can_create_and_modify() throws Exception {
-    String payload = "{\"serialNumber\":\"SN2\",\"make\":\"HP\",\"model\":\"P\",\"purchaseDate\":\"2024-01-01\"}";
+    String payload = "{\"serialNumber\":\"SN2\",\"make\":\"HP\",\"model\":\"P\",\"purchaseDate\":\"2024-01-01\",\"type\":\"DESKTOP\"}";
     given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
     mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isOk());
     }
@@ -239,12 +239,12 @@ class AssetControllerSecurityTests {
         given(currentUserService.requireCurrentUser()).willReturn(mgr);
 
         // creating in own dept allowed
-    String payloadOwn = "{\"serialNumber\":\"SN3\",\"make\":\"Lenovo\",\"model\":\"T\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":1}";
+    String payloadOwn = "{\"serialNumber\":\"SN3\",\"make\":\"Lenovo\",\"model\":\"T\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":1,\"type\":\"DESKTOP\"}";
         given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
     mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payloadOwn)).andExpect(status().isOk());
 
         // creating in other dept forbidden
-    String payloadOther = "{\"serialNumber\":\"SN4\",\"make\":\"Lenovo\",\"model\":\"T\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":2}";
+    String payloadOther = "{\"serialNumber\":\"SN4\",\"make\":\"Lenovo\",\"model\":\"T\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":2,\"type\":\"DESKTOP\"}";
         given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"));
     mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payloadOther)).andExpect(status().isForbidden());
     }

@@ -1,6 +1,7 @@
 package com.clims.backend.dto;
 
 import com.clims.backend.models.enums.AssetStatus;
+import com.clims.backend.models.enums.AssetType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,24 +14,29 @@ public class AssetDtos {
             @NotBlank String model,
             @NotNull LocalDate purchaseDate,
             LocalDate warrantyExpiryDate,
+            @NotNull(message = "type is required") AssetType type,
             Long locationId,
             Long vendorId,
             Long departmentId
-    ){}
+    ){
+    }
 
     public record UpdateAssetRequest(
             String make,
             String model,
-            LocalDate warrantyExpiryDate,
+            java.time.LocalDate warrantyExpiryDate,
             AssetStatus status,
+            AssetType type,
             Long locationId,
             Long departmentId
-    ){}
+    ){
+    }
 
     public record AssignAssetRequest(
             @NotNull Long userId,
             Long locationId
-    ){}
+    ){
+    }
 
     public record AssetResponse(
             Long id,
@@ -39,9 +45,11 @@ public class AssetDtos {
             String make,
             String model,
             AssetStatus status,
+            AssetType type,
             String assignedTo,
             String location,
             String vendor,
             String department
-    ){}
+    ){
+    }
 }

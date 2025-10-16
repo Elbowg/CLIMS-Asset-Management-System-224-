@@ -123,6 +123,7 @@ public class AssetController {
     private AssetDtos.AssetResponse toResponse(Asset a) {
         return new AssetDtos.AssetResponse(
                 a.getId(), a.getAssetTag(), a.getSerialNumber(), a.getMake(), a.getModel(), a.getStatus(),
+                a.getType(),
                 a.getAssignedUser() != null ? a.getAssignedUser().getUsername() : null,
                 a.getLocation() != null ? a.getLocation().getName() : null,
                 a.getVendor() != null ? a.getVendor().getName() : null,

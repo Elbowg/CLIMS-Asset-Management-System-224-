@@ -31,7 +31,7 @@ test('create asset with department persisted', async () => {
   const dept = deps[0];
 
   const serial = `TEST-VITEST-${Date.now()}`;
-  const body = { serialNumber: serial, make: 'Vitest', model: 'V-1', purchaseDate: new Date().toISOString().slice(0,10), departmentId: dept.id };
+  const body = { serialNumber: serial, make: 'Vitest', model: 'V-1', type: 'DESKTOP', purchaseDate: new Date().toISOString().slice(0,10), departmentId: dept.id };
 
   const createRes = await fetch(`${API_BASE}/api/assets`, { method: 'POST', headers, body: JSON.stringify(body) });
   const created = await createRes.json();

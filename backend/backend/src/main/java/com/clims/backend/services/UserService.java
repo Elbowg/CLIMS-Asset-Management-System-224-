@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.clims.backend.security.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class UserService {
@@ -56,6 +58,46 @@ public class UserService {
 
     public AppUser findByUsername(String username) {
         return userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    public AppUser findByUsernameOrNull(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
+
+    @Transactional
+    public void recordFailedLogin(String username, int maxAttempts, long lockoutMinutes) {
+        AppUser user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) return;
+        int attempts = user.getFailedLoginAttempts() + 1;
+        user.setFailedLoginAttempts(attempts);
+        if (attempts >= maxAttempts) {
+            user.setLockoutUntil(Instant.now().plus(lockoutMinutes, ChronoUnit.MINUTES));
+            user.setFailedLoginAttempts(0); // reset attempts after locking
+        }
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void resetFailedLogins(AppUser user) {
+        if (user == null) return;
+        user.setFailedLoginAttempts(0);
+        user.setLockoutUntil(null);
+        userRepository.save(user);
+    }
+
+    public boolean isLocked(AppUser user) {
+        if (user == null) return false;
+        Instant until = user.getLockoutUntil();
+        if (until == null) return false;
+        return Instant.now().isBefore(until);
+    }
+
+    @Transactional
+    public AppUser unlockUser(Long id) {
+        AppUser user = get(id);
+        user.setFailedLoginAttempts(0);
+        user.setLockoutUntil(null);
+        return userRepository.save(user);
     }
 
     public Page<AppUser> search(Pageable pageable, Role role, Long departmentId, String q) {

@@ -5,6 +5,7 @@ import com.clims.backend.models.entities.RefreshToken;
 import com.clims.backend.repositories.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class RefreshTokenService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    @Transactional
     public RefreshToken createRefreshToken(AppUser user) {
         // remove existing tokens for user
         refreshTokenRepository.deleteByUser(user);
@@ -35,11 +37,13 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByToken(token).filter(t -> !t.isRevoked() && t.getExpiryDate().isAfter(Instant.now()));
     }
 
+    @Transactional
     public void revoke(RefreshToken token) {
         token.setRevoked(true);
         refreshTokenRepository.save(token);
     }
 
+    @Transactional
     public void revokeForUser(AppUser user) {
         refreshTokenRepository.deleteByUser(user);
     }

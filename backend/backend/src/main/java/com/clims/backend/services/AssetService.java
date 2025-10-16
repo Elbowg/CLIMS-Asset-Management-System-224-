@@ -53,6 +53,7 @@ public class AssetService {
         asset.setModel(req.model());
         asset.setPurchaseDate(req.purchaseDate());
         asset.setWarrantyExpiryDate(req.warrantyExpiryDate());
+        if (req.type() != null) asset.setType(req.type());
         if (req.locationId() != null) {
             asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow(() -> new NotFoundException("Location not found")));
         }
@@ -106,6 +107,7 @@ public class AssetService {
         if (req.model() != null) asset.setModel(req.model());
         if (req.warrantyExpiryDate() != null) asset.setWarrantyExpiryDate(req.warrantyExpiryDate());
         if (req.status() != null) asset.setStatus(req.status());
+    if (req.type() != null) asset.setType(req.type());
     if (req.locationId() != null) asset.setLocation(locationRepository.findById(req.locationId()).orElseThrow(() -> new NotFoundException("Location not found")));
     if (req.departmentId() != null) asset.setDepartment(departmentRepository.findById(req.departmentId()).orElseThrow(() -> new NotFoundException("Department not found")));
         auditLogService.log("Asset", asset.getId(), "UPDATE", "Asset updated", actor);
