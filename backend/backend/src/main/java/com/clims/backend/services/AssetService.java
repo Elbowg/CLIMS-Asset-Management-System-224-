@@ -22,6 +22,8 @@ import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.access.AccessDeniedException;
+import com.clims.backend.security.Role;
 
 @Service
 public class AssetService {
@@ -92,6 +94,14 @@ public class AssetService {
     @Transactional
     public Asset update(Long id, AssetDtos.UpdateAssetRequest req, AppUser actor) {
         Asset asset = get(id);
+        // Enforce department scope: managers may only update assets in their own department
+        if (actor != null && actor.getRole() == Role.MANAGER) {
+            Long mgrDept = actor.getDepartment() != null ? actor.getDepartment().getId() : null;
+            Long assetDept = asset.getDepartment() != null ? asset.getDepartment().getId() : null;
+            if (mgrDept == null || assetDept == null || !mgrDept.equals(assetDept)) {
+                throw new AccessDeniedException("Manager cannot update asset in other department");
+            }
+        }
         if (req.make() != null) asset.setMake(req.make());
         if (req.model() != null) asset.setModel(req.model());
         if (req.warrantyExpiryDate() != null) asset.setWarrantyExpiryDate(req.warrantyExpiryDate());
@@ -105,6 +115,7 @@ public class AssetService {
     @Transactional
     public void delete(Long id, AppUser actor) {
         Asset asset = get(id);
+        // Delete authorized at controller via AssetSecurity (service assumes caller checked)
         assetRepository.delete(asset);
         auditLogService.log("Asset", id, "DELETE", "Asset deleted", actor);
     }
@@ -155,4 +166,6 @@ public class AssetService {
         auditLogService.log("Asset", id, "DISPOSE", "Asset retired", actor);
         return assetRepository.save(asset);
     }
+
+    // Note: authorization is enforced by controller-level AssetSecurity bean; service retains business validation and auditing.
 }

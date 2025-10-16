@@ -9,6 +9,12 @@ import com.clims.backend.services.AuditLogService;
 import com.clims.backend.models.entities.Asset;
 import com.clims.backend.exceptions.NotFoundException;
 import org.junit.jupiter.api.Test;
+import com.clims.backend.models.entities.AppUser;
+import com.clims.backend.models.entities.Department;
+import com.clims.backend.security.Role;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -171,6 +177,76 @@ class AssetControllerSecurityTests {
 
         mvc.perform(get("/api/assets/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = {"MANAGER"})
+    void create_manager_forbidden_when_service_denies() throws Exception {
+        AppUser mgr = new AppUser(); mgr.setId(10L); mgr.setRole(Role.MANAGER);
+        given(currentUserService.requireCurrentUser()).willReturn(mgr);
+        given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"));
+
+        String payload = "{\"serialNumber\":\"SN123\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":2}";
+        mvc.perform(post("/api/assets").contentType(MediaType.APPLICATION_JSON).content(payload))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = {"MANAGER"})
+    void delete_requiresAdmin() throws Exception {
+        // Controller-level PreAuthorize should block non-admins before service is called
+        mvc.perform(delete("/api/assets/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = {"ADMIN"})
+    void admin_can_create_update_assign_dispose() throws Exception {
+        // create
+    String payload = "{\"serialNumber\":\"SN1\",\"make\":\"Dell\",\"model\":\"X\",\"purchaseDate\":\"2024-01-01\"}";
+    given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
+    mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isOk());
+
+        // update
+    given(assetService.get(1L)).willReturn(new Asset());
+    given(assetService.update(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
+    mvc.perform(put("/api/assets/1").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isOk());
+
+        // assign
+    given(assetService.assign(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
+    mvc.perform(post("/api/assets/1/assign").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"userId\":2}")).andExpect(status().isOk());
+
+        // dispose
+    given(assetService.get(2L)).willReturn(new Asset());
+    given(assetService.dispose(org.mockito.ArgumentMatchers.eq(2L), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
+    mvc.perform(post("/api/assets/2/dispose").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = {"IT_STAFF"})
+    void itStaff_can_create_and_modify() throws Exception {
+    String payload = "{\"serialNumber\":\"SN2\",\"make\":\"HP\",\"model\":\"P\",\"purchaseDate\":\"2024-01-01\"}";
+    given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
+    mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = {"MANAGER"})
+    void manager_allowed_within_department_but_forbidden_for_other() throws Exception {
+        Department d1 = new Department(); d1.setId(1L);
+        Department d2 = new Department(); d2.setId(2L);
+        AppUser mgr = new AppUser(); mgr.setId(10L); mgr.setRole(Role.MANAGER); mgr.setDepartment(d1);
+        given(currentUserService.requireCurrentUser()).willReturn(mgr);
+
+        // creating in own dept allowed
+    String payloadOwn = "{\"serialNumber\":\"SN3\",\"make\":\"Lenovo\",\"model\":\"T\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":1}";
+        given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willReturn(new Asset());
+    mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payloadOwn)).andExpect(status().isOk());
+
+        // creating in other dept forbidden
+    String payloadOther = "{\"serialNumber\":\"SN4\",\"make\":\"Lenovo\",\"model\":\"T\",\"purchaseDate\":\"2024-01-01\",\"departmentId\":2}";
+        given(assetService.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).willThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"));
+    mvc.perform(post("/api/assets").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()).contentType(MediaType.APPLICATION_JSON).content(payloadOther)).andExpect(status().isForbidden());
     }
 
     @Test

@@ -2,5 +2,26 @@
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive",
     "java.import.maven.enabled": true,
-    "spring-boot.ls.enabled": true
+    "spring-boot.ls.enabled": true,
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "xprotocol",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 33060,
+            "driver": "MySQL",
+            "name": "MySQL local",
+            "database": "clims",
+            "username": "root",
+            "password": "Ringworm@#2023",
+            "connectionTimeout": 30
+        }
+    ],
+    "java.project.sourcePaths": [
+        "docs"
+    ]
 }

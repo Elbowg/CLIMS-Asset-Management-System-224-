@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
-    "api:gen": "openapi-typescript ../docs/openapi/openapi-v1.json -o src/api/schema.ts",
+  "api:gen": "openapi-typescript ../docs/openapi/openapi-v1.json -o src/api/schema.ts",
+  "gen-api-local": "pwsh -NoProfile -ExecutionPolicy Bypass -File ../scripts/generate-api-schema.ps1",
     "test": "vitest --run"
   },
   "dependencies": {

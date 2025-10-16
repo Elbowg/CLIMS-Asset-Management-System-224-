@@ -40,7 +40,7 @@ const statusColor = (s?: string) => {
 };
 
 export const AssetsPage: React.FC = () => {
-  const { token } = useAuth();
+  const { token, currentUser } = useAuth();
   const [page, setPage] = React.useState(0);
   const [size, setSize] = React.useState(10);
   const [query, setQuery] = React.useState('');
@@ -65,6 +65,13 @@ export const AssetsPage: React.FC = () => {
 
   const assets = isPage(data) ? data.content ?? [] : (data ?? []) as Asset[];
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
+
+  const canDeleteAsset = (a: Asset) => {
+    const role = currentUser?.role ?? '';
+    if (role === 'ADMIN' || role === 'IT_STAFF') return true;
+    if (role === 'MANAGER') return !!(currentUser?.department && a.department && currentUser.department === a.department);
+    return false;
+  };
 
   const handleDelete = async (id: number) => {
     if (!token) return;
@@ -129,12 +136,16 @@ export const AssetsPage: React.FC = () => {
               <option value="HR">HR</option>
               <option value="Marketing">Marketing</option>
             </select>
-            <Link to="/assets/new" className="ml-3 inline-flex items-center gap-2 px-3 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">
+            {((currentUser?.role === 'ADMIN') || (currentUser?.role === 'IT_STAFF') || (currentUser?.role === 'MANAGER')) ? (
+              <Link to="/assets/new" className="ml-3 inline-flex items-center gap-2 px-3 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add asset
-            </Link>
+              </Link>
+            ) : (
+              <span className="ml-3 inline-flex items-center gap-2 px-3 py-2 bg-gray-200 text-gray-500 rounded" title="You don't have permission to create assets">Add asset</span>
+            )}
           </div>
         </div>
       </div>
@@ -173,17 +184,26 @@ export const AssetsPage: React.FC = () => {
                 </td>
                 <td className="px-6 py-4">{a.purchaseDate ? new Date(a.purchaseDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}</td>
                 <td className="px-6 py-4 text-right">
-                  <a href={`/assets/${a.id}/edit`} className="inline-block mr-3 text-gray-600 hover:text-gray-900" title="Edit">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                      <path d="M3 17a1 1 0 011-1h12v2H4a1 1 0 01-1-1z" />
-                    </svg>
-                  </a>
+                  {((currentUser?.role === 'ADMIN' || currentUser?.role === 'IT_STAFF') || (currentUser?.role === 'MANAGER' && currentUser.department && a.department && currentUser.department === a.department)) ? (
+                    <a href={`/assets/${a.id}/edit`} className="inline-block mr-3 text-gray-600 hover:text-gray-900" title="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                        <path d="M3 17a1 1 0 011-1h12v2H4a1 1 0 01-1-1z" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <span className="inline-block mr-3 text-gray-300" title="You don't have permission to edit this asset">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                        <path d="M3 17a1 1 0 011-1h12v2H4a1 1 0 01-1-1z" />
+                      </svg>
+                    </span>
+                  )}
                   <button
-                    className="inline-block text-red-600 hover:text-red-800 disabled:opacity-50"
-                    title="Delete"
+                    className={`inline-block ${canDeleteAsset(a) ? 'text-red-600 hover:text-red-800' : 'text-gray-400'} disabled:opacity-50`}
+                    title={canDeleteAsset(a) ? 'Delete' : "You don't have permission to delete this asset"}
                     onClick={() => handleDelete(a.id)}
-                    disabled={deletingId === a.id}
+                    disabled={deletingId === a.id || !canDeleteAsset(a)}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H3.5A1.5 1.5 0 002 5.5V6h16v-.5A1.5 1.5 0 0016.5 4H15V3a1 1 0 00-1-1H6zm2 6a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clipRule="evenodd" />

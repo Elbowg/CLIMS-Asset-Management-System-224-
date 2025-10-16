@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -71,35 +72,35 @@ public class AssetController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','IT_STAFF','MANAGER')")
-    public ResponseEntity<AssetDtos.AssetResponse> create(@RequestBody AssetDtos.CreateAssetRequest req) {
+    @PreAuthorize("@assetSecurity.canCreate(@currentUserService.requireCurrentUser(), #req.departmentId)")
+    public ResponseEntity<AssetDtos.AssetResponse> create(@Validated @RequestBody AssetDtos.CreateAssetRequest req) {
         Asset saved = assetService.create(req, currentUserService.requireCurrentUser());
         return ResponseEntity.ok(toResponse(saved));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','IT_STAFF','MANAGER')")
-    public ResponseEntity<AssetDtos.AssetResponse> update(@PathVariable Long id, @RequestBody AssetDtos.UpdateAssetRequest req) {
+    @PreAuthorize("@assetSecurity.canModify(@currentUserService.requireCurrentUser(), @assetService.get(#id))")
+    public ResponseEntity<AssetDtos.AssetResponse> update(@PathVariable Long id, @Validated @RequestBody AssetDtos.UpdateAssetRequest req) {
         Asset saved = assetService.update(id, req, currentUserService.requireCurrentUser());
         return ResponseEntity.ok(toResponse(saved));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@assetSecurity.isAdmin(@currentUserService.requireCurrentUser())")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         assetService.delete(id, currentUserService.requireCurrentUser());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('ADMIN','IT_STAFF','MANAGER')")
-    public ResponseEntity<AssetDtos.AssetResponse> assign(@PathVariable Long id, @RequestBody AssetDtos.AssignAssetRequest req) {
+    @PreAuthorize("@assetSecurity.canModify(@currentUserService.requireCurrentUser(), @assetService.get(#id))")
+    public ResponseEntity<AssetDtos.AssetResponse> assign(@PathVariable Long id, @Validated @RequestBody AssetDtos.AssignAssetRequest req) {
         Asset saved = assetService.assign(id, req, currentUserService.requireCurrentUser());
         return ResponseEntity.ok(toResponse(saved));
     }
 
     @PostMapping("/{id}/dispose")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','FINANCE')")
+    @PreAuthorize("@assetSecurity.canDispose(@currentUserService.requireCurrentUser(), @assetService.get(#id))")
     public ResponseEntity<AssetDtos.AssetResponse> dispose(@PathVariable Long id) {
         Asset saved = assetService.dispose(id, currentUserService.requireCurrentUser());
         return ResponseEntity.ok(toResponse(saved));

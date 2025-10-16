@@ -10,6 +10,7 @@ export const AssetFormPage: React.FC = () => {
   const { id } = useParams();
   const isEdit = !!id && id !== 'new';
   const { token } = useAuth();
+  const { currentUser } = useAuth();
   const api = createApi(() => token);
   const nav = useNavigate();
   const toast = useToast();
@@ -61,6 +62,15 @@ export const AssetFormPage: React.FC = () => {
       });
     }
   }, [asset]);
+
+  // If current user is a MANAGER, force departmentId to their department and disable changing it
+  React.useEffect(() => {
+    if (currentUser?.role === 'MANAGER' && currentUser.department) {
+      // find department id from lookups if available
+      const dept = lookups?.departments?.find((d: any) => d.name === currentUser.department);
+      if (dept) setForm(f => ({ ...f, departmentId: dept.id }));
+    }
+  }, [currentUser, lookups]);
 
   // If creating new, prefill purchaseDate to today
   React.useEffect(() => {
@@ -171,10 +181,13 @@ export const AssetFormPage: React.FC = () => {
         </div>
         <div className="mb-3">
           <label className="block text-sm mb-1">Department</label>
-          <select className="w-full border px-2 py-1" value={form.departmentId ?? ''} onChange={e => updateField('departmentId', e.target.value ? Number(e.target.value) : undefined)}>
+          <select className="w-full border px-2 py-1" value={form.departmentId ?? ''} onChange={e => updateField('departmentId', e.target.value ? Number(e.target.value) : undefined)} disabled={currentUser?.role === 'MANAGER'}>
             <option value="">-- select --</option>
             {(lookups?.departments ?? []).map((d: any) => <option value={d.id} key={d.id}>{d.name}</option>)}
           </select>
+          {currentUser?.role === 'MANAGER' && (
+            <div className="text-xs text-gray-500 mt-1">Your department is preselected and cannot be changed.</div>
+          )}
         </div>
         <div className="mb-3">
           <label className="block text-sm mb-1">Vendor</label>

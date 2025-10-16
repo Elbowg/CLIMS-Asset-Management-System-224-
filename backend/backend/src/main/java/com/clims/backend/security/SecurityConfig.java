@@ -9,6 +9,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,10 +25,12 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
+    private final Environment env;
 
-    public SecurityConfig(UserDetailsService userDetailsService, JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(UserDetailsService userDetailsService, JwtAuthFilter jwtAuthFilter, Environment env) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthFilter = jwtAuthFilter;
+        this.env = env;
     }
 
     @Bean
@@ -38,16 +41,38 @@ public class SecurityConfig {
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
         )
-        .authorizeHttpRequests(auth -> auth
+        .authorizeHttpRequests(auth -> {
             // Public endpoints (keep narrow definitions first)
-            .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources", "/swagger-resources/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/").permitAll()
-            .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+            auth.requestMatchers("/api/auth/**").permitAll();
+            auth.requestMatchers(HttpMethod.GET, "/").permitAll();
             // Allow Spring Boot default error path so anonymous users see problem details for public endpoints
-            .requestMatchers("/error").permitAll()
-            .anyRequest().authenticated()
-        )
+            auth.requestMatchers("/error").permitAll();
+
+            // Actuator: allow anonymous only for health and info. Require auth for other actuator endpoints.
+            auth.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll();
+            auth.requestMatchers(HttpMethod.GET, "/actuator/info").permitAll();
+            auth.requestMatchers("/actuator/**").authenticated();
+
+            // Swagger / OpenAPI: permit in dev/local profiles for convenience; otherwise require ADMIN
+            boolean isDev = false;
+            try {
+                String[] active = env.getActiveProfiles();
+                for (String p : active) {
+                    if ("dev".equalsIgnoreCase(p) || "local".equalsIgnoreCase(p)) {
+                        isDev = true;
+                        break;
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            if (isDev) {
+                auth.requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources", "/swagger-resources/**").permitAll();
+            } else {
+                auth.requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources", "/swagger-resources/**").hasRole("ADMIN");
+            }
+
+            auth.anyRequest().authenticated();
+        })
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

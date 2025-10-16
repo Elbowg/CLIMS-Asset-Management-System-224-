@@ -150,6 +150,23 @@ Admin user management (ADMIN only)
 Configured in `SecurityConfig` with stateless JWT and RBAC. Roles include:
 `ADMIN`, `IT_STAFF`, `EMPLOYEE`, `MANAGER`, `TECHNICIAN`, `AUDITOR`, `FINANCE`, `VENDOR`.
 
+### RBAC policy (summary)
+
+- Admin (`ADMIN`): full access across the system. Can create, update, delete, assign, and dispose any asset.
+- IT staff (`IT_STAFF`): broad operational access (create/update/assign/dispose) across departments.
+- Manager (`MANAGER`): scoped to their own department for asset operations — they can create, update, assign, and dispose assets that belong to their department only. They cannot delete assets.
+- Finance (`FINANCE`): allowed to dispose assets (retire) but otherwise limited.
+- Employee/Technician/Auditor/Vendor: limited read or role-specific actions only (see controller method annotations for details).
+
+Authorization is enforced at both the controller layer (via `@PreAuthorize` annotations calling a centralized `AssetSecurity` bean) and at the service layer for defense-in-depth.
+
+### Swagger / Actuator exposure
+- In `dev` or `local` profiles the Swagger UI and `/v3/api-docs` are public for developer convenience.
+- In non-dev (e.g., production) profiles the OpenAPI endpoints and Swagger UI require `ADMIN` role.
+- Only `/actuator/health` and `/actuator/info` are public; other actuator endpoints require authentication.
+
+If you need different exposure rules for staging or internal networks, adjust `SecurityConfig` or use profile-specific configuration.
+
 ## CORS
 - Applied globally for `/api/**` with profile-aware defaults.
 - Allowed origins, methods, and headers are configured via `CORS_ALLOWED_*` envs (see above).

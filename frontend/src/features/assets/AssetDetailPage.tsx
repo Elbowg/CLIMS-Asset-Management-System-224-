@@ -20,6 +20,14 @@ export const AssetDetailPage: React.FC = () => {
 
   const toast = useToast();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const { currentUser } = useAuth();
+
+  const canDispose = (a: any) => {
+    const role = currentUser?.role ?? '';
+    if (role === 'ADMIN' || role === 'IT_STAFF' || role === 'FINANCE') return true;
+    if (role === 'MANAGER') return !!(currentUser?.department && a?.department && currentUser.department === a.department);
+    return false;
+  };
   const onDispose = async () => {
     if (!id) return;
     try {
@@ -51,7 +59,11 @@ export const AssetDetailPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button onClick={() => setConfirmOpen(true)} className="px-3 py-1 bg-red-600 text-white rounded">Dispose</button>
+            {canDispose(data) ? (
+              <button onClick={() => setConfirmOpen(true)} className="px-3 py-1 bg-red-600 text-white rounded">Dispose</button>
+            ) : (
+              <button disabled className="px-3 py-1 bg-red-200 text-white rounded opacity-60" title="You don't have permission to dispose this asset">Dispose</button>
+            )}
           </div>
           <ConfirmModal open={confirmOpen} title="Dispose Asset" message={`Dispose asset ${data.assetTag ?? data.id}?`} onConfirm={() => { setConfirmOpen(false); onDispose(); }} onCancel={() => setConfirmOpen(false)} />
         </div>
