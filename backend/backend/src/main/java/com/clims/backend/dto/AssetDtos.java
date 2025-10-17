@@ -3,13 +3,14 @@ package com.clims.backend.dto;
 import com.clims.backend.models.enums.AssetStatus;
 import com.clims.backend.models.enums.AssetType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
 public class AssetDtos {
     public record CreateAssetRequest(
-            @NotBlank String serialNumber,
+            @NotBlank @Pattern(regexp = "^[A-Za-z0-9_-]+$", message = "serialNumber contains invalid characters") String serialNumber,
             @NotBlank String make,
             @NotBlank String model,
             @NotNull LocalDate purchaseDate,
@@ -49,6 +50,7 @@ public class AssetDtos {
             String assignedTo,
             String location,
             String vendor,
+            Long departmentId,
             String department
     ){
     }

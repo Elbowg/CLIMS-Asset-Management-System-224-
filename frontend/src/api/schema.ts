@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{id}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["unlockUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/{id}/reset-password": {
         parameters: {
             query?: never;
@@ -142,6 +158,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["register_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["logout"];
         delete?: never;
         options?: never;
         head?: never;
@@ -459,14 +507,16 @@ export interface components {
         UpdateAssetRequest: {
             make?: string;
             model?: string;
-            /** @enum {string} */
-            type?: "DESKTOP" | "LAPTOP";
             /** Format: date */
             warrantyExpiryDate?: string;
             /** @enum {string} */
             status?: "AVAILABLE" | "ASSIGNED" | "UNDER_REPAIR" | "RETIRED";
+            /** @enum {string} */
+            type?: "DESKTOP" | "LAPTOP";
             /** Format: int64 */
             locationId?: number;
+            /** Format: int64 */
+            departmentId?: number;
         };
         AssetResponse: {
             /** Format: int64 */
@@ -476,12 +526,15 @@ export interface components {
             make?: string;
             model?: string;
             /** @enum {string} */
-            type?: "DESKTOP" | "LAPTOP";
-            /** @enum {string} */
             status?: "AVAILABLE" | "ASSIGNED" | "UNDER_REPAIR" | "RETIRED";
+            /** @enum {string} */
+            type?: "DESKTOP" | "LAPTOP";
             assignedTo?: string;
             location?: string;
             vendor?: string;
+            /** Format: int64 */
+            departmentId?: number;
+            department?: string;
         };
         RegisterRequest: {
             username: string;
@@ -540,6 +593,12 @@ export interface components {
             completedDate?: string;
             reportedBy?: string;
         };
+        RefreshRequest: {
+            refreshToken?: string;
+        };
+        LogoutRequest: {
+            refreshToken?: string;
+        };
         LoginRequest: {
             username?: string;
             password?: string;
@@ -552,16 +611,18 @@ export interface components {
             serialNumber: string;
             make: string;
             model: string;
-            /** @enum {string} */
-            type: "DESKTOP" | "LAPTOP";
             /** Format: date */
             purchaseDate: string;
             /** Format: date */
             warrantyExpiryDate?: string;
+            /** @enum {string} */
+            type: "DESKTOP" | "LAPTOP";
             /** Format: int64 */
             locationId?: number;
             /** Format: int64 */
             vendorId?: number;
+            /** Format: int64 */
+            departmentId?: number;
         };
         AssignAssetRequest: {
             /** Format: int64 */
@@ -805,6 +866,28 @@ export interface operations {
             };
         };
     };
+    unlockUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     resetPassword: {
         parameters: {
             query?: never;
@@ -989,6 +1072,54 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoutRequest"];
             };
         };
         responses: {

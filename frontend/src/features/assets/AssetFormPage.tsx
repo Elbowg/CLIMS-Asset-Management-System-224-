@@ -9,8 +9,7 @@ import { useToast } from '../../components/ToastContext';
 export const AssetFormPage: React.FC = () => {
   const { id } = useParams();
   const isEdit = !!id && id !== 'new';
-  const { token } = useAuth();
-  const { currentUser } = useAuth();
+  const { token, currentUser } = useAuth();
   const api = createApi(() => token);
   const nav = useNavigate();
   const toast = useToast();
@@ -39,7 +38,7 @@ export const AssetFormPage: React.FC = () => {
     serialNumber: '',
     make: '',
     model: '',
-    type: '',
+    type: '' as '' | 'DESKTOP' | 'LAPTOP',
     purchaseDate: '',
     warrantyExpiryDate: '',
     locationId: undefined as number | undefined,
@@ -55,12 +54,12 @@ export const AssetFormPage: React.FC = () => {
         serialNumber: a.serialNumber ?? '',
         make: a.make ?? '',
         model: a.model ?? '',
-        type: (a as any).type ?? '',
+        type: a.type ?? '',
         purchaseDate: (a.purchaseDate as string) ?? '',
         warrantyExpiryDate: (a.warrantyExpiryDate as string) ?? '',
         locationId: (a.locationId as number) ?? undefined,
         vendorId: (a.vendorId as number) ?? undefined,
-        departmentId: ((a as any).departmentId as number) ?? undefined
+        departmentId: (a.departmentId as number) ?? undefined
       });
     }
   }, [asset]);
@@ -82,7 +81,7 @@ export const AssetFormPage: React.FC = () => {
     }
   }, [isEdit]);
 
-  const updateField = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const updateField = (k: string, v: any) => setForm(f => ({ ...f, [k]: v } as any));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +96,8 @@ export const AssetFormPage: React.FC = () => {
           make: form.make || undefined,
           model: form.model || undefined,
           warrantyExpiryDate: form.warrantyExpiryDate || undefined,
-          locationId: form.locationId
+          locationId: form.locationId,
+          departmentId: form.departmentId
         });
         // update cached asset detail
         qc.setQueryData(['asset', Number(id), token], (prev: components['schemas']['AssetResponse'] | undefined) => ({ ...(prev ?? {}), make: form.make, model: form.model, warrantyExpiryDate: form.warrantyExpiryDate, locationId: form.locationId } as components['schemas']['AssetResponse']));
@@ -116,7 +116,7 @@ export const AssetFormPage: React.FC = () => {
         toast.push('Asset updated', 'success');
         nav(`/assets/${id}`);
       } else {
-        const created = await api.assets.create(({
+        const created = await api.assets.create({
           serialNumber: form.serialNumber,
           make: form.make,
           model: form.model,
@@ -126,7 +126,7 @@ export const AssetFormPage: React.FC = () => {
           locationId: form.locationId,
           vendorId: form.vendorId,
           departmentId: form.departmentId
-        } as any));
+        });
         // optimistically insert into any cached assets lists
   qc.setQueriesData({ queryKey: ['assets'] }, (old: any) => {
           if (!old) return old;
@@ -155,43 +155,43 @@ export const AssetFormPage: React.FC = () => {
       {isLoading && <div>Loading...</div>}
   <form onSubmit={onSubmit} className="max-w-lg">
         <div className="mb-3">
-          <label className="block text-sm mb-1">Serial Number <span className="text-red-500">*</span></label>
-          <input value={form.serialNumber} onChange={e => updateField('serialNumber', e.target.value)} className="w-full border px-2 py-1" />
+          <label htmlFor="serialNumber" className="block text-sm mb-1">Serial Number <span className="text-red-500">*</span></label>
+          <input id="serialNumber" value={form.serialNumber} onChange={e => updateField('serialNumber', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Make <span className="text-red-500">*</span></label>
-          <input value={form.make} onChange={e => updateField('make', e.target.value)} className="w-full border px-2 py-1" />
+          <label htmlFor="make" className="block text-sm mb-1">Make <span className="text-red-500">*</span></label>
+          <input id="make" value={form.make} onChange={e => updateField('make', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Model <span className="text-red-500">*</span></label>
-          <input value={form.model} onChange={e => updateField('model', e.target.value)} className="w-full border px-2 py-1" />
+          <label htmlFor="model" className="block text-sm mb-1">Model <span className="text-red-500">*</span></label>
+          <input id="model" value={form.model} onChange={e => updateField('model', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Type <span className="text-red-500">*</span></label>
-          <select value={form.type} onChange={e => updateField('type', e.target.value)} className="w-full border px-2 py-1">
+          <label htmlFor="type" className="block text-sm mb-1">Type <span className="text-red-500">*</span></label>
+          <select id="type" value={form.type} onChange={e => updateField('type', e.target.value)} className="w-full border px-2 py-1">
             <option value="">-- select --</option>
             <option value="DESKTOP">Desktop</option>
             <option value="LAPTOP">Laptop</option>
           </select>
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Purchase Date <span className="text-red-500">*</span></label>
-          <input type="date" value={form.purchaseDate} onChange={e => updateField('purchaseDate', e.target.value)} className="w-full border px-2 py-1" />
+          <label htmlFor="purchaseDate" className="block text-sm mb-1">Purchase Date <span className="text-red-500">*</span></label>
+          <input id="purchaseDate" type="date" value={form.purchaseDate} onChange={e => updateField('purchaseDate', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Warranty Expiry</label>
-          <input type="date" value={form.warrantyExpiryDate} onChange={e => updateField('warrantyExpiryDate', e.target.value)} className="w-full border px-2 py-1" />
+          <label htmlFor="warrantyExpiryDate" className="block text-sm mb-1">Warranty Expiry</label>
+          <input id="warrantyExpiryDate" type="date" value={form.warrantyExpiryDate} onChange={e => updateField('warrantyExpiryDate', e.target.value)} className="w-full border px-2 py-1" />
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Location</label>
-          <select className="w-full border px-2 py-1" value={form.locationId ?? ''} onChange={e => updateField('locationId', e.target.value ? Number(e.target.value) : undefined)}>
+          <label htmlFor="locationId" className="block text-sm mb-1">Location</label>
+          <select id="locationId" className="w-full border px-2 py-1" value={form.locationId ?? ''} onChange={e => updateField('locationId', e.target.value ? Number(e.target.value) : undefined)}>
             <option value="">-- select --</option>
             {(lookups?.locations ?? []).map((l: any) => <option value={l.id} key={l.id}>{l.name}</option>)}
           </select>
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Department</label>
-          <select className="w-full border px-2 py-1" value={form.departmentId ?? ''} onChange={e => updateField('departmentId', e.target.value ? Number(e.target.value) : undefined)} disabled={currentUser?.role === 'MANAGER'}>
+          <label htmlFor="departmentId" className="block text-sm mb-1">Department</label>
+          <select id="departmentId" className="w-full border px-2 py-1" value={form.departmentId ?? ''} onChange={e => updateField('departmentId', e.target.value ? Number(e.target.value) : undefined)} disabled={currentUser?.role === 'MANAGER'}>
             <option value="">-- select --</option>
             {(lookups?.departments ?? []).map((d: any) => <option value={d.id} key={d.id}>{d.name}</option>)}
           </select>
@@ -200,8 +200,8 @@ export const AssetFormPage: React.FC = () => {
           )}
         </div>
         <div className="mb-3">
-          <label className="block text-sm mb-1">Vendor</label>
-          <select className="w-full border px-2 py-1" value={form.vendorId ?? ''} onChange={e => updateField('vendorId', e.target.value ? Number(e.target.value) : undefined)}>
+          <label htmlFor="vendorId" className="block text-sm mb-1">Vendor</label>
+          <select id="vendorId" className="w-full border px-2 py-1" value={form.vendorId ?? ''} onChange={e => updateField('vendorId', e.target.value ? Number(e.target.value) : undefined)}>
             <option value="">-- select --</option>
             {(lookups?.vendors ?? []).map((v: any) => <option value={v.id} key={v.id}>{v.name}</option>)}
           </select>

@@ -66,6 +66,11 @@ const ProfilePage: React.FC = () => {
   // update strength as user types
   React.useEffect(() => { calcStrength(newPassword); }, [newPassword]);
 
+  const strengthWidthClass = React.useMemo(() => {
+    const map = ['w-0', 'w-1/5', 'w-2/5', 'w-3/5', 'w-4/5', 'w-full'];
+    return map[Math.min(Math.max(Math.floor(strength), 0), 5)];
+  }, [strength]);
+
   return (
     <div className="max-w-md mx-auto">
       <h2 className="text-xl font-semibold mb-4">Profile</h2>
@@ -84,7 +89,7 @@ const ProfilePage: React.FC = () => {
           <label htmlFor="newPassword" className="block text-sm">New password</label>
           <input id="newPassword" name="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full border px-2 py-1 rounded" />
           <div className="mt-2 h-2 bg-gray-200 rounded overflow-hidden">
-            <div style={{ width: `${(strength/5)*100}%` }} className={`h-2 ${strength < 3 ? 'bg-red-500' : strength < 4 ? 'bg-yellow-400' : 'bg-green-500'}`}></div>
+            <div className={`h-2 ${strengthWidthClass} ${strength < 3 ? 'bg-red-500' : strength < 4 ? 'bg-yellow-400' : 'bg-green-500'}`}></div>
           </div>
           <div className="text-xs text-gray-600 mt-1">Strength: {strength}/5</div>
         </div>

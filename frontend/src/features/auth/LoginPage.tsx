@@ -39,12 +39,12 @@ export const LoginPage: React.FC = () => {
         <h1 className="text-xl font-semibold">Sign in</h1>
         {error && <div className="text-sm text-red-600">{error}</div>}
         <div>
-          <label className="block text-sm font-medium mb-1">Username</label>
-          <input value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded border px-2 py-1" />
+          <label htmlFor="login-username" className="block text-sm font-medium mb-1">Username</label>
+          <input id="login-username" value={username} onChange={e => setUsername(e.target.value)} className="w-full rounded border px-2 py-1" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded border px-2 py-1" />
+          <label htmlFor="login-password" className="block text-sm font-medium mb-1">Password</label>
+          <input id="login-password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded border px-2 py-1" />
         </div>
         <button disabled={loading} className="w-full bg-brand text-white py-2 rounded hover:bg-brand-dark disabled:opacity-50">
           {loading ? 'Signing in...' : 'Sign In'}

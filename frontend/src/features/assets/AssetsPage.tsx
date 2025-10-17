@@ -31,10 +31,10 @@ type Page<T> = {
 
 const statusColor = (s?: string) => {
   switch ((s || '').toLowerCase()) {
-    case 'AVAILABLE': return 'bg-green-100 text-green-800';
-    case 'ASSIGNED': return 'bg-sky-100 text-sky-800';
-    case 'UNDER_REPAIR': return 'bg-amber-100 text-amber-800';
-    case 'RETIRED': return 'bg-red-100 text-red-800';
+    case 'available': return 'bg-green-100 text-green-800';
+    case 'assigned': return 'bg-sky-100 text-sky-800';
+    case 'under_repair': return 'bg-amber-100 text-amber-800';
+    case 'retired': return 'bg-red-100 text-red-800';
     default: return 'bg-gray-100 text-gray-800';
   }
 };
@@ -116,8 +116,7 @@ export const AssetsPage: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <button onClick={() => { setQuery(''); setStatusFilter(''); setDepartmentFilter(''); refetch(); }} className="px-3 py-2 border rounded bg-white hover:bg-gray-50">Clear</button>
-                <button aria-label="Clear filters" onClick={() => { setQuery(''); setStatusFilter(''); setDepartmentFilter(''); refetch(); }} className="px-3 py-2 border rounded bg-white hover:bg-gray-50">Clear</button>
-                <button aria-label="Run search" onClick={() => refetch()} className="px-3 py-2 rounded bg-gray-800 text-white hover:bg-gray-700">Search</button>
+              <button aria-label="Run search" onClick={() => refetch()} className="px-3 py-2 rounded bg-gray-800 text-white hover:bg-gray-700">Search</button>
             </div>
           </div>
 
@@ -230,7 +229,7 @@ export const AssetsPage: React.FC = () => {
 
           <div className="flex items-center gap-2 text-sm">
             <label className="text-sm">Page size</label>
-            <select value={size} onChange={e => { setSize(Number(e.target.value)); setPage(0); }} className="border px-2 py-1">
+            <select aria-label="Page size" value={size} onChange={e => { setSize(Number(e.target.value)); setPage(0); }} className="border px-2 py-1">
               <option value={5}>5</option>
               <option value={10}>10</option>
               <option value={20}>20</option>
